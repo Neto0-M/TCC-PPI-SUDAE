@@ -56,7 +56,7 @@ $sql_listar = "SELECT ATA.idATA, ATA.data, ATA.assunto, USUARIO.nome AS redator
                FROM ATA 
                INNER JOIN USUARIO ON ATA.idRedator = USUARIO.idUSUARIO
                ORDER BY ATA.data DESC";
-$result = $conn->query($sql_listar);
+$result == $conn->query($sql_listar);
 ?>
 
 <!DOCTYPE html>
@@ -93,6 +93,8 @@ $result = $conn->query($sql_listar);
         <button type="submit"><?php echo $ata_edit ? "Atualizar" : "Salvar"; ?></button>
     </form>
 
+    <a href="dashboard.php">Voltar</a>
+
     <h2>ATAs Registradas</h2>
     <table border="2" cellpadding="3">
         <tr>
@@ -117,3 +119,4 @@ $result = $conn->query($sql_listar);
     </table>
 </body>
 </html>
+
