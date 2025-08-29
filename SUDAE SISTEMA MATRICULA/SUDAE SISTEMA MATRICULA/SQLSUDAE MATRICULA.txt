@@ -1,0 +1,18 @@
+
+CREATE DATABASE IF NOT EXISTS sudae;
+USE sudae;
+
+
+CREATE TABLE IF NOT EXISTS usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    matricula VARCHAR(10) NOT NULL UNIQUE,
+    senha VARCHAR(32) NOT NULL, -- MD5 gera 32 caracteres
+    tipo ENUM('aluno','professor','servidor_ae') NOT NULL
+);
+
+
+INSERT INTO usuarios (nome, matricula, senha, tipo) VALUES
+('João', '2023304486', MD5('joao123'), 'aluno'),
+('Professor', '2023000001', MD5('professor123'), 'professor'),
+('Servidor AE', '2023000002', MD5('servidor123'), 'servidor_ae');
