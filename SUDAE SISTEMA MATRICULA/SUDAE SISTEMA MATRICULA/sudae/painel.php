@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// Proteção: redireciona se não estiver logado
+
 if (!isset($_SESSION['usuario'])) {
     header("Location: login.php");
     exit;
@@ -80,3 +80,4 @@ $tipo = $_SESSION['usuario']['tipo'];
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
