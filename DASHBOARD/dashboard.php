@@ -20,25 +20,35 @@ $tipo = $usuario['tipo']; // 1 = Servidor AE, 2 = Professor, 3 = Aluno
 $idUsuario = $usuario['idUSUARIO'];
 
 // Dashboard conforme o tipo de usuário
-if ($tipo == 3 or $tipo == 2) {
-    // Aluno ou Professor: apenas suas atas
+if ($tipo == 3 || $tipo == 2) {
+    // Atas redigidas pelo aluno ou professor (idRedator)
     $sqlAtas = "
         SELECT 
             a.idATA,
             a.assunto,
             a.`data`,
             a.anotacoes,
-            GROUP_CONCAT(u.nome SEPARATOR ', ') AS participantes,
+            GROUP_CONCAT(u.nome ORDER BY u.nome SEPARATOR ', ') AS participantes,
             COUNT(u.idUSUARIO) AS qtd_participantes
         FROM ATA a
-        INNER JOIN PARTICIPANTES p ON a.idATA = p.idAta
+        LEFT JOIN PARTICIPANTES p ON a.idATA = p.idAta
         LEFT JOIN USUARIO u ON p.idUSUARIO = u.idUSUARIO
-        WHERE p.idUSUARIO = $idUsuario
+        WHERE a.idRedator = ?
         GROUP BY a.idATA, a.assunto, a.`data`, a.anotacoes
         ORDER BY a.`data` DESC
     ";
-    // Contagem apenas das atas do aluno ou professor
-    $sqlQtdAtas = "SELECT COUNT(*) AS total FROM PARTICIPANTES WHERE idUSUARIO = $idUsuario";
+
+    $sqlQtdAtas = "SELECT COUNT(*) AS total FROM ATA WHERE idRedator = ?";
+
+    $stmtAtas = $conexao->prepare($sqlAtas);
+    $stmtAtas->bind_param("i", $idUsuario);
+    $stmtAtas->execute();
+    $resAtas = $stmtAtas->get_result();
+
+    $stmtQtd = $conexao->prepare($sqlQtdAtas);
+    $stmtQtd->bind_param("i", $idUsuario);
+    $stmtQtd->execute();
+    $resQtd = $stmtQtd->get_result();
 } else {
     // Servidor AE  todas as atas
     $sqlAtas = "
@@ -57,16 +67,17 @@ if ($tipo == 3 or $tipo == 2) {
     ";
     // Contagem de todas as atas
     $sqlQtdAtas = "SELECT COUNT(*) AS total FROM ATA";
+
+    $resAtas = $conexao->query($sqlAtas);
+    $resQtd = $conexao->query($sqlQtdAtas);
 }
 
-$resAtas = $conexao->query($sqlAtas);
 if (!$resAtas) {
     die("Erro na consulta de atas: " . $conexao->error);
 }
 
 // Executa a contagem de atas
 $qtdAtas = 0;
-$resQtd = $conexao->query($sqlQtdAtas);
 if ($resQtd) {
     $row = $resQtd->fetch_assoc();
     $qtdAtas = (int)$row['total'];
@@ -88,6 +99,8 @@ if ($resQtd) {
         .container { padding:30px; }
         .beneficios { background:#f5f9ff; padding:20px; border-radius:10px; margin-bottom:30px; display:grid; grid-template-columns:1fr 1fr; gap:20px; }
         .beneficios h2 { grid-column:1 / span 2; margin-bottom:10px; }
+        .stats { display: flex; gap: 20px; margin-bottom: 30px; }
+        .card { flex: 1; background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 20px; text-align: center; }
         .beneficios div h3 { margin:0 0 5px; }
         .stats { display:flex; gap:20px; margin-bottom:30px; }
         .card { flex:1; background:#fff; border:1px solid #eee; border-radius:10px; padding:20px; text-align:center; }
@@ -127,6 +140,10 @@ if ($resQtd) {
         <div class="card">
             <h3>Total de ATAs</h3>
             <p><?= $qtdAtas ?></p>
+        </div>
+        <div class="card">
+            <h3>Total de atrasos</h3>
+            <p><?= $qtdAtrasos ?></p>
         </div>
     </section>
 
