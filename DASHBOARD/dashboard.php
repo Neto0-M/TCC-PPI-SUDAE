@@ -19,6 +19,49 @@ if (!isset($usuario['idUSUARIO'], $usuario['tipo'])) {
 $tipo = $usuario['tipo']; // 1 = Servidor AE, 2 = Professor, 3 = Aluno
 $idUsuario = $usuario['idUSUARIO'];
 
+// Calcula o total de atrasos conforme o tipo de usuário
+$qtdAtrasos = 0;
+if ($tipo == 3) {
+    // Aluno: conta apenas seus próprios atrasos
+    $sqlAtrasos = "SELECT COUNT(*) AS total FROM ATRASO WHERE idAluno = ?";
+    $stmtAtrasos = $conexao->prepare($sqlAtrasos);
+    $stmtAtrasos->bind_param("i", $idUsuario);
+    $stmtAtrasos->execute();
+    $resAtrasos = $stmtAtrasos->get_result();
+    if ($resAtrasos) {
+        $rowAtrasos = $resAtrasos->fetch_assoc();
+        $qtdAtrasos = (int)$rowAtrasos['total'];
+    }
+} elseif ($tipo == 2) {
+    // Professor: conta atrasos dos alunos da(s) turma(s) do professor
+    // Supondo que professor vê atrasos dos alunos da mesma turma
+    $turma = $usuario['turma'] ?? null;
+    if ($turma) {
+        $sqlAtrasos = "
+            SELECT COUNT(*) AS total 
+            FROM ATRASO a
+            INNER JOIN USUARIO u ON a.idAluno = u.idUSUARIO
+            WHERE u.turma = ?
+        ";
+        $stmtAtrasos = $conexao->prepare($sqlAtrasos);
+        $stmtAtrasos->bind_param("s", $turma);
+        $stmtAtrasos->execute();
+        $resAtrasos = $stmtAtrasos->get_result();
+        if ($resAtrasos) {
+            $rowAtrasos = $resAtrasos->fetch_assoc();
+            $qtdAtrasos = (int)$rowAtrasos['total'];
+        }
+    }
+} else {
+    // Servidor AE: conta todos os atrasos
+    $sqlAtrasos = "SELECT COUNT(*) AS total FROM ATRASO";
+    $resAtrasos = $conexao->query($sqlAtrasos);
+    if ($resAtrasos) {
+        $rowAtrasos = $resAtrasos->fetch_assoc();
+        $qtdAtrasos = (int)$rowAtrasos['total'];
+    }
+}
+
 // Dashboard conforme o tipo de usuário
 if ($tipo == 3 || $tipo == 2) {
     // Atas redigidas pelo aluno ou professor (idRedator)
