@@ -52,11 +52,14 @@ if (isset($_GET['edit'])) {
 }
 
 // ====== Listar todas ======
-$sql_listar = "SELECT ATA.idATA, ATA.data, ATA.assunto, USUARIO.nome AS redator 
+$sql_listar = "SELECT ATA.idATA, ATA.data, ATA.assunto, ATA.idRedator, USUARIO.nome AS redator 
                FROM ATA 
                INNER JOIN USUARIO ON ATA.idRedator = USUARIO.idUSUARIO
                ORDER BY ATA.data DESC";
-$result == $conn->query($sql_listar);
+$result = $conn->query($sql_listar);
+if (!$result) {
+    die("Erro ao listar ATAs: " . $conn->error);
+}
 ?>
 
 <!DOCTYPE html>
@@ -104,19 +107,24 @@ $result == $conn->query($sql_listar);
             <th>Aluno</th>
             <th>Ações</th>
         </tr>
-        <?php while ($ata = $result->fetch_assoc()): ?>
+        <?php if (isset($result) && $result): ?>
+            <?php while ($ata = $result->fetch_assoc()): ?>
+                <tr>
+                    <td><?php echo $ata['idATA']; ?></td>
+                    <td><?php echo $ata['data']; ?></td>
+                    <td><?php echo $ata['assunto']; ?></td>
+                    <td><?php echo $ata['redator']; ?></td>
+                    <td>
+                        <a href="?edit=<?php echo $ata['idATA']; ?>">Editar</a> | 
+                        <a href="?delete=<?php echo $ata['idATA']; ?>" onclick="return confirm('Deseja excluir esta ATA?')">Excluir</a>
+                    </td>
+                </tr>
+            <?php endwhile; ?>
+        <?php else: ?>
             <tr>
-                <td><?php echo $ata['idATA']; ?></td>
-                <td><?php echo $ata['data']; ?></td>
-                <td><?php echo $ata['assunto']; ?></td>
-                <td><?php echo $ata['redator']; ?></td>
-                <td>
-                    <a href="?edit=<?php echo $ata['idATA']; ?>">Editar</a> | 
-                    <a href="?delete=<?php echo $ata['idATA']; ?>" onclick="return confirm('Deseja excluir esta ATA?')">Excluir</a>
-                </td>
+                <td colspan="5">Nenhuma ATA encontrada.</td>
             </tr>
-        <?php endwhile; ?>
+        <?php endif; ?>
     </table>
 </body>
 </html>
-
