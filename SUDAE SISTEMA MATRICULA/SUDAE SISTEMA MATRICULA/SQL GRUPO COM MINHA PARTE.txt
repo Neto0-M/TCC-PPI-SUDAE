@@ -1,19 +1,7 @@
--- MySQL Workbench Synchronization
--- Generated: 2025-08-15 18:11
--- Model: New Model
--- Version: 1.0
--- Project: Name of the project
--- Author: netom
-
-SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
-SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
-SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
-
-CREATE SCHEMA IF NOT EXISTS `SUDAE` DEFAULT CHARACTER SET utf8 ;
-
 CREATE DATABASE IF NOT EXISTS sudae;
 USE sudae;
 
+-- Tabela principal (já existente)
 CREATE TABLE IF NOT EXISTS `SUDAE`.`USUARIO` (
   `idUSUARIO` INT(11) NOT NULL AUTO_INCREMENT,
   `nome` VARCHAR(45) NOT NULL,
@@ -90,8 +78,7 @@ CREATE TABLE IF NOT EXISTS `SUDAE`.`PARTICIPANTES` (
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
--- Adicionando a criação da tabela 'usuarios' conforme o segundo SQL
-
+-- Tabela secundaria (usuarios) com triggers
 CREATE TABLE IF NOT EXISTS usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
@@ -100,10 +87,9 @@ CREATE TABLE IF NOT EXISTS usuarios (
     tipo ENUM('aluno','professor','servidor_ae') NOT NULL
 );
 
--- Trigger para garantir que toda senha inserida seja convertida em MD5
 DELIMITER //
 
-CREATE TRIGGER before_usuario_insert
+CREATE TRIGGER before_usuarios_insert
 BEFORE INSERT ON usuarios
 FOR EACH ROW
 BEGIN
@@ -111,7 +97,7 @@ BEGIN
 END;
 //
 
-CREATE TRIGGER before_usuario_update
+CREATE TRIGGER before_usuarios_update
 BEFORE UPDATE ON usuarios
 FOR EACH ROW
 BEGIN
@@ -120,7 +106,3 @@ END;
 //
 
 DELIMITER ;
-
-SET SQL_MODE=@OLD_SQL_MODE;
-SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
-SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
