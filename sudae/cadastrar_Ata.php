@@ -1,5 +1,5 @@
-<?php
-require_once 'conexao.php';
+<?php 
+require_once 'conexao.php'; 
 
 // ====== Cadastrar nova ATA ======
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['acao'] === 'cadastrar') {
@@ -9,8 +9,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['ac
     $encaminhamentos = $_POST['encaminhamentos'];
     $idRedator = $_POST['idRedator'];
 
-    $sql = "INSERT INTO ATA (idATA, data, assunto, anotacoes, encaminhamentos, idRedator) 
-            VALUES (NULL, ?, ?, ?, ?, ?)";
+    // Corrected INSERT statement: DO NOT insert the idATA as it is AUTO_INCREMENT
+    $sql = "INSERT INTO ATA (data, assunto, anotacoes, encaminhamentos, idRedator) VALUES (?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ssssi", $data, $assunto, $anotacoes, $encaminhamentos, $idRedator);
     $stmt->execute();
@@ -25,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['ac
     $encaminhamentos = $_POST['encaminhamentos'];
     $idRedator = $_POST['idRedator'];
 
+    // Update ATA record
     $sql = "UPDATE ATA SET data=?, assunto=?, anotacoes=?, encaminhamentos=?, idRedator=? WHERE idATA=?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ssssii", $data, $assunto, $anotacoes, $encaminhamentos, $idRedator, $idATA);
@@ -52,10 +53,7 @@ if (isset($_GET['edit'])) {
 }
 
 // ====== Listar todas ======
-$sql_listar = "SELECT ATA.idATA, ATA.data, ATA.assunto, ATA.idRedator, USUARIO.nome AS redator 
-               FROM ATA 
-               INNER JOIN USUARIO ON ATA.idRedator = USUARIO.idUSUARIO
-               ORDER BY ATA.data DESC";
+$sql_listar = "SELECT ATA.idATA, ATA.data, ATA.assunto, ATA.idRedator, USUARIO.nome AS redator FROM ATA INNER JOIN USUARIO ON ATA.idRedator = USUARIO.idUSUARIO ORDER BY ATA.data DESC";
 $result = $conn->query($sql_listar);
 if (!$result) {
     die("Erro ao listar ATAs: " . $conn->error);
@@ -69,62 +67,78 @@ if (!$result) {
     <title>Cadastro de ATAs</title>
 </head>
 <body>
-    <h2><?php echo $ata_edit ? "Editar ATA" : "Cadastrar nova ATA"; ?></h2>
-    <form method="POST">
-        <input type="hidden" name="acao" value="<?php echo $ata_edit ? "editar" : "cadastrar"; ?>">
-        <?php if ($ata_edit): ?>
-            <input type="hidden" name="idATA" value="<?php echo $ata_edit['idATA']; ?>">
-        <?php endif; ?>
 
-        Data: <input type="datetime-local" name="data" value="<?php echo $ata_edit['data'] ?? ''; ?>" required><br><br>
-        Assunto: <input type="text" name="assunto" value="<?php echo $ata_edit['assunto'] ?? ''; ?>" required><br><br>
-        Conteúdo ATA: <textarea name="anotacoes" required><?php echo $ata_edit['anotacoes'] ?? ''; ?></textarea><br><br>
-        Encaminhamentos: <textarea name="encaminhamentos"><?php echo $ata_edit['encaminhamentos'] ?? ''; ?></textarea><br><br>
+<h2><?php echo $ata_edit ? "Editar ATA" : "Cadastrar nova ATA"; ?></h2>
 
-        Aluno: 
-        <select name="idRedator" required>
-            <option value="">-- Selecione --</option>
-            <?php
-            $usuarios = $conn->query("SELECT idUSUARIO, nome FROM USUARIO");
-            while ($u = $usuarios->fetch_assoc()) {
-                $selected = ($ata_edit && $ata_edit['idRedator'] == $u['idUSUARIO']) ? "selected" : "";
-                echo "<option value='{$u['idUSUARIO']}' $selected>{$u['nome']}</option>";
-            }
-            ?>
-        </select><br><br>
+<!-- Formulário de Cadastro ou Edição -->
+<form method="POST">
+    <input type="hidden" name="acao" value="<?php echo $ata_edit ? "editar" : "cadastrar"; ?>">
 
-        <button type="submit"><?php echo $ata_edit ? "Atualizar" : "Salvar"; ?></button>
-    </form>
+    <?php if ($ata_edit): ?>
+        <input type="hidden" name="idATA" value="<?php echo $ata_edit['idATA']; ?>">
+    <?php endif; ?>
 
-    <a href="dashboard.php">Voltar</a>
+    <label>Data:</label>
+    <input type="datetime-local" name="data" value="<?php echo $ata_edit['data'] ?? ''; ?>" required><br><br>
 
-    <h2>ATAs Registradas</h2>
-    <table border="2" cellpadding="3">
-        <tr>
-            <th>ID</th>
-            <th>Data</th>
-            <th>Assunto</th>
-            <th>Aluno</th>
-            <th>Ações</th>
-        </tr>
-        <?php if (isset($result) && $result): ?>
-            <?php while ($ata = $result->fetch_assoc()): ?>
-                <tr>
-                    <td><?php echo $ata['idATA']; ?></td>
-                    <td><?php echo $ata['data']; ?></td>
-                    <td><?php echo $ata['assunto']; ?></td>
-                    <td><?php echo $ata['redator']; ?></td>
-                    <td>
-                        <a href="?edit=<?php echo $ata['idATA']; ?>">Editar</a> | 
-                        <a href="?delete=<?php echo $ata['idATA']; ?>" onclick="return confirm('Deseja excluir esta ATA?')">Excluir</a>
-                    </td>
-                </tr>
-            <?php endwhile; ?>
-        <?php else: ?>
+    <label>Assunto:</label>
+    <input type="text" name="assunto" value="<?php echo $ata_edit['assunto'] ?? ''; ?>" required><br><br>
+
+    <label>Conteúdo ATA:</label>
+    <textarea name="anotacoes" required><?php echo $ata_edit['anotacoes'] ?? ''; ?></textarea><br><br>
+
+    <label>Encaminhamentos:</label>
+    <textarea name="encaminhamentos"><?php echo $ata_edit['encaminhamentos'] ?? ''; ?></textarea><br><br>
+
+    <label>Redator:</label>
+    <select name="idRedator" required>
+        <option value="">-- Selecione --</option>
+        <?php
+        $usuarios = $conn->query("SELECT idUSUARIO, nome FROM USUARIO");
+        while ($u = $usuarios->fetch_assoc()) {
+            $selected = ($ata_edit && $ata_edit['idRedator'] == $u['idUSUARIO']) ? "selected" : "";
+            echo "<option value='{$u['idUSUARIO']}' $selected>{$u['nome']}</option>";
+        }
+        ?>
+    </select><br><br>
+
+    <button type="submit"><?php echo $ata_edit ? "Atualizar" : "Salvar"; ?></button>
+</form>
+
+<a href="dashboard.php">Voltar</a>
+
+<h2>ATAs Registradas</h2>
+
+<!-- Lista de ATAs -->
+<table border="2" cellpadding="3">
+    <tr>
+        <th>ID</th>
+        <th>Data</th>
+        <th>Assunto</th>
+        <th>Redator</th>
+        <th>Ações</th>
+    </tr>
+
+    <?php if (isset($result) && $result): ?>
+        <?php while ($ata = $result->fetch_assoc()): ?>
             <tr>
-                <td colspan="5">Nenhuma ATA encontrada.</td>
+                <td><?php echo $ata['idATA']; ?></td>
+                <td><?php echo $ata['data']; ?></td>
+                <td><?php echo $ata['assunto']; ?></td>
+                <td><?php echo $ata['redator']; ?></td>
+                <td>
+                    <a href="?edit=<?php echo $ata['idATA']; ?>">Editar</a> | 
+                    <a href="?delete=<?php echo $ata['idATA']; ?>" onclick="return confirm('Deseja excluir esta ATA?')">Excluir</a>
+                </td>
             </tr>
-        <?php endif; ?>
-    </table>
+        <?php endwhile; ?>
+    <?php else: ?>
+        <tr>
+            <td colspan="5">Nenhuma ATA encontrada.</td>
+        </tr>
+    <?php endif; ?>
+</table>
+
 </body>
 </html>
+
