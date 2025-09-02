@@ -9,21 +9,21 @@ if (isset($_POST['cadastrar'])) {
     $senha = $_POST['senha'];
     $tipo = $_POST['tipo'];
 
-    // Validação: matrícula deve ter exatamente 10 dígitos
+   
     if (!preg_match('/^\d{10}$/', $matricula)) {
         $mensagem = "A matrícula deve possuir exatamente 10 dígitos!";
         $sucesso = false;
     } else {
-        // Verifica se a matrícula já existe
+     
         $check = $conexao->query("SELECT id FROM usuarios WHERE matricula = '$matricula'");
         if ($check->num_rows > 0) {
             $mensagem = "Esta matrícula já está cadastrada!";
             $sucesso = false;
         } else {
-            // Criptografa a senha com MD5
+           
             $senha_hash = md5($senha);
 
-            // Insere no banco
+         
             $sql = "INSERT INTO usuarios (nome, matricula, senha, tipo) 
                     VALUES ('$nome', '$matricula', '$senha_hash', '$tipo')";
             if ($conexao->query($sql)) {
@@ -142,3 +142,4 @@ if (isset($_POST['cadastrar'])) {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+

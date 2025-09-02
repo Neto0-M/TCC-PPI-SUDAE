@@ -1,7 +1,7 @@
 <?php
 include 'conexao.php';
 
-session_start(); // Mova o session_start para o topo, importante
+session_start(); 
 
 $mensagem = '';
 $sucesso = false;
@@ -10,7 +10,7 @@ if (isset($_POST['login'])) {
     $matricula = $_POST['matricula'];
     $senha = $_POST['senha'];
 
-    // Criptografa a senha digitada com MD5
+    
     $senha_hash = md5($senha);
 
     $sql = "SELECT * FROM usuarios WHERE matricula='$matricula' AND senha='$senha_hash'";
@@ -21,7 +21,7 @@ if (isset($_POST['login'])) {
         $mensagem = "Bem-vindo, {$usuario['nome']}! Tipo: {$usuario['tipo']}";
         $sucesso = true;
 
-        // Salva dados do usuário na sessão
+      
         $_SESSION['usuario'] = $usuario;
     } else {
         $mensagem = "Login inválido!";
@@ -36,7 +36,7 @@ if (isset($_POST['login'])) {
   <title>Login - SUDAE</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Bootstrap CSS -->
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
   <style>
@@ -132,7 +132,9 @@ if (isset($_POST['login'])) {
   </div>
 </div>
 
-<!-- Bootstrap JS -->
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+
