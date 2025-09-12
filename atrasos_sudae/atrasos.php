@@ -103,7 +103,7 @@ a:hover { text-decoration: underline; }
     <label>Motivo:<br>
         <select name="motivo" required>
             <?php 
-            $motivos = ["Dormir", "Chuva", "Acordei atrasado", "Problemas de transporte", "Outros"];
+            $motivos = ["Sem justifica", "Atraso do Ônibus", "Consulta de Exames", "Outros"];
             $motivoAtual = $edit['motivo'] ?? '';
             $motivoBase = explode(" - ", $motivoAtual)[0] ?? ''; 
             foreach ($motivos as $m) {
@@ -147,3 +147,4 @@ a:hover { text-decoration: underline; }
 </table>
 </body>
 </html>
+
