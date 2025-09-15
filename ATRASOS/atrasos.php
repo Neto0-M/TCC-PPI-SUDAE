@@ -1,16 +1,5 @@
 <?php  
-// Conexão com SQLite
-$dbFile = __DIR__ . '/atrasos.db';
-$db = new PDO("sqlite:$dbFile");
-$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-// Criar tabela se não existir
-$db->exec("CREATE TABLE IF NOT EXISTS atrasos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    matricula TEXT NOT NULL,
-    data TEXT NOT NULL,
-    motivo TEXT NOT NULL
-)");
+include '../conexao.php';
 
 // Função para formatar data
 function data_br($data) {
@@ -61,10 +50,10 @@ if (isset($_GET['edit'])) {
 }
 
 // === LISTAR TODOS OS REGISTROS ===
-$atrasos = $db->query("
-    SELECT * FROM atrasos
-    ORDER BY SUBSTR(matricula, 1, 4) DESC, data DESC, id DESC
-")->fetchAll(PDO::FETCH_ASSOC);
+$conexao = $conn->query("
+    SELECT * FROM atraso
+    ORDER BY SUBSTR(IdAluno, 1, 4) DESC, data DESC, IdAtraso DESC
+");
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -130,7 +119,7 @@ a:hover { text-decoration: underline; }
         <th>Motivo</th>
         <th>Ações</th>
     </tr>
-    <?php foreach ($atrasos as $a): ?>
+    <?php foreach ($conexao as $a): ?>
     <tr>
         <td><?= htmlspecialchars($a['matricula']) ?></td>
         <td><?= data_br($a['data']) ?></td>

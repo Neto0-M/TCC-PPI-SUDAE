@@ -23,7 +23,7 @@ if (isset($_POST['login'])) {
             'matricula' => $usuario['matricula']
         ];
 
-        header("Location: dashboard.php");
+        header("Location: ../DASHBOARD/dashboard.php");
         exit;
     } else {
         $mensagem = "Login inválido!";
@@ -107,7 +107,7 @@ if (isset($_POST['login'])) {
 
     <?php if ($sucesso): ?>
       <div class="text-center mt-3">
-        <a href=".././DASHBOARD/dashboard.php" class="btn btn-success">Ir para o painel</a>
+        <a href="../DASHBOARD/dashboard.php" class="btn btn-success">Ir para o painel</a>
       </div>
     <?php else: ?>
       <form method="POST">

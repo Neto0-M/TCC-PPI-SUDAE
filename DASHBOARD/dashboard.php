@@ -190,6 +190,22 @@ if ($resQtd) {
         </div>
     </section>
 
+    <?php if ($tipo == 1): // - Servidor AE ?>
+        <section class="funções">
+        <a href="../ATAS/cadastrar_Ata.php">
+            <button type="button">
+            <h3>Registrar Ata</h3>
+            </button>
+        </a>
+
+        <a href="../ATRASOS/atrasos.php">
+            <button type="button">
+            <h3>Registrar Atraso</h3>
+            </button>
+        </a>
+        </section>
+        <?php endif; ?>
+
     <section class="atas">
         <h2>ATAs Recentes</h2>
         <?php if ($resAtas && $resAtas->num_rows > 0): ?>
