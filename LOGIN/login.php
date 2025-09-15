@@ -1,30 +1,28 @@
 <?php
-session_start();
 include 'conexao.php';
+
+session_start(); 
 
 $mensagem = '';
 $sucesso = false;
 
 if (isset($_POST['login'])) {
     $matricula = $_POST['matricula'];
-    $senha = md5($_POST['senha']);
+    $senha = $_POST['senha'];
 
-    $sql = "SELECT * FROM usuario WHERE matricula='$matricula' AND senha='$senha'";
+    
+    $senha_hash = md5($senha);
+
+    $sql = "SELECT * FROM usuarios WHERE matricula='$matricula' AND senha='$senha_hash'";
     $res = $conexao->query($sql);
 
     if ($res->num_rows === 1) {
         $usuario = $res->fetch_assoc();
+        $mensagem = "Bem-vindo, {$usuario['nome']}! Tipo: {$usuario['tipo']}";
+        $sucesso = true;
 
-        // salva na sessão
-        $_SESSION['usuario'] = [
-            'idUSUARIO' => $usuario['idUSUARIO'],
-            'nome'      => $usuario['nome'],
-            'tipo'      => $usuario['tipo'],
-            'matricula' => $usuario['matricula']
-        ];
-
-        header("Location: dashboard.php");
-        exit;
+      
+        $_SESSION['usuario'] = $usuario;
     } else {
         $mensagem = "Login inválido!";
     }
@@ -38,7 +36,7 @@ if (isset($_POST['login'])) {
   <title>Login - SUDAE</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Bootstrap CSS -->
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
   <style>
@@ -107,13 +105,13 @@ if (isset($_POST['login'])) {
 
     <?php if ($sucesso): ?>
       <div class="text-center mt-3">
-        <a href="dashboard.php" class="btn btn-success">Ir para o painel</a>
+        <a href="painel.php" class="btn btn-success">Ir para o painel</a>
       </div>
     <?php else: ?>
       <form method="POST">
         <div class="mb-3">
-          <label for="matricula" class="form-label">Matricula</label>
-          <input type="matricula" name="matricula" class="form-control" required>
+          <label for="matricula" class="form-label">Matrícula</label>
+          <input type="text" name="matricula" class="form-control" required>
         </div>
 
         <div class="mb-3">
@@ -134,7 +132,9 @@ if (isset($_POST['login'])) {
   </div>
 </div>
 
- 
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+
