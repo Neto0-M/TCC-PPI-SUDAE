@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once __DIR__ . './atas/conexao.php';
+require_once __DIR__ . '././ATAS/conexao.php';
 
 // Verifica se o usuário está logado
 if (!isset($_SESSION['usuario'])) {
