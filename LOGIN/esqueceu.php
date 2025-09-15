@@ -6,7 +6,7 @@ $linkReset = '';
 if (isset($_POST['recuperar'])) {
     $matricula = $_POST['matricula'];
 
-    $sql = "SELECT * FROM usuarios WHERE matricula='$matricula'";
+    $sql = "SELECT * FROM usuario WHERE matricula='$matricula'";
     $res = $conexao->query($sql);
 
     if ($res->num_rows === 1) {

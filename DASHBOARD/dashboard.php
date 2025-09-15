@@ -161,7 +161,7 @@ if ($resQtd) {
             <h1>📄 Sistema Unificado da Assistência Estudantil</h1>
             <nav>
                 <a href="#">Ferramentas</a>
-                <a href="logout.php">Sair</a>
+                <a href="../LOGIN/logout.php">Sair</a>
             </nav>
         </header>
 <div class="container">

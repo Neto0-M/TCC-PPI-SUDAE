@@ -107,7 +107,7 @@ if (isset($_POST['login'])) {
 
     <?php if ($sucesso): ?>
       <div class="text-center mt-3">
-        <a href="dashboard.php" class="btn btn-success">Ir para o painel</a>
+        <a href=".././DASHBOARD/dashboard.php" class="btn btn-success">Ir para o painel</a>
       </div>
     <?php else: ?>
       <form method="POST">

@@ -60,7 +60,7 @@
         $nova = $_POST['nova_senha'];
         $matricula = $_POST['matricula'];
 
-        $sql = "UPDATE usuarios SET senha='$nova' WHERE matricula='$matricula'";
+        $sql = "UPDATE usuario SET senha='$nova' WHERE matricula='$matricula'";
         if ($conexao->query($sql)) {
             echo "<div class='alert alert-success mt-3'>Senha redefinida com sucesso! <a href='login.php'>Fazer login</a></div>";
         } else {
