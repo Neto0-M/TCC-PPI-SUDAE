@@ -1,4 +1,6 @@
 <?php
+// Inclui o arquivo de conexão com o banco de dados
+require_once 'conexao.php';
 
 // Função para sanitizar dados de entrada
 if (!function_exists('sanitize_input')) {

@@ -1,10 +1,10 @@
 <?php
 session_start();
-require_once __DIR__ . '/conexao.php';
+require_once __DIR__ . './atas/conexao.php';
 
 // Verifica se o usuário está logado
 if (!isset($_SESSION['usuario'])) {
-    header('Location: login.php');
+    header('Location: ./login/login.php');
     exit;
 }
 
