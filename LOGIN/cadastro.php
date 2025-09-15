@@ -1,38 +1,24 @@
-<?php include 'conexao.php'; 
+<?php 
+include '../conexao.php';
 
 $mensagem = '';
 $sucesso = false;
 
+
 if (isset($_POST['cadastrar'])) {
     $nome = $_POST['nome'];
     $matricula = $_POST['matricula'];
-    $senha = $_POST['senha'];
+    $senha = md5($_POST['senha']);
     $tipo = $_POST['tipo'];
+    $login = $matricula;
 
-   
-    if (!preg_match('/^\d{10}$/', $matricula)) {
-        $mensagem = "A matrícula deve possuir exatamente 10 dígitos!";
-        $sucesso = false;
+    $sql = "INSERT INTO usuario (nome, matricula, login, senha, tipo) 
+        VALUES ('$nome', '$matricula', '$login', '$senha', '$tipo')";
+    if ($conexao->query($sql)) {
+        $mensagem = "Cadastro realizado com sucesso!";
+        $sucesso = true;
     } else {
-     
-        $check = $conexao->query("SELECT id FROM usuarios WHERE matricula = '$matricula'");
-        if ($check->num_rows > 0) {
-            $mensagem = "Esta matrícula já está cadastrada!";
-            $sucesso = false;
-        } else {
-           
-            $senha_hash = md5($senha);
-
-         
-            $sql = "INSERT INTO usuarios (nome, matricula, senha, tipo) 
-                    VALUES ('$nome', '$matricula', '$senha_hash', '$tipo')";
-            if ($conexao->query($sql)) {
-                $mensagem = "Cadastro realizado com sucesso!";
-                $sucesso = true;
-            } else {
-                $mensagem = "Erro: " . $conexao->error;
-            }
-        }
+        $mensagem = "Erro: " . $conexao->error;
     }
 }
 ?>
@@ -105,11 +91,11 @@ if (isset($_POST['cadastrar'])) {
       <form method="POST">
         <div class="mb-3">
           <label for="nome" class="form-label">Nome</label>
-          <input type="text" name="nome" class="form-control" required value="<?= htmlspecialchars($nome ?? '') ?>">
+          <input type="text" name="nome" class="form-control" required>
         </div>
         <div class="mb-3">
-          <label for="matricula" class="form-label">Matrícula</label>
-          <input type="text" name="matricula" class="form-control" required value="<?= htmlspecialchars($matricula ?? '') ?>">
+          <label for="matricula" class="form-label">Matricula</label>
+          <input type="matricula" name="matricula" class="form-control" required>
         </div>
         <div class="mb-3">
           <label for="senha" class="form-label">Senha</label>
@@ -118,9 +104,9 @@ if (isset($_POST['cadastrar'])) {
         <div class="mb-3">
           <label for="tipo" class="form-label">Tipo de Usuário</label>
           <select name="tipo" class="form-select" required>
-            <option value="aluno" <?= (isset($tipo) && $tipo == 'aluno') ? 'selected' : '' ?>>Aluno</option>
-            <option value="professor" <?= (isset($tipo) && $tipo == 'professor') ? 'selected' : '' ?>>Professor</option>
-            <option value="servidor_ae" <?= (isset($tipo) && $tipo == 'servidor_ae') ? 'selected' : '' ?>>Servidor AE</option>
+            <option value="3">Aluno</option>
+            <option value="2">Professor</option>
+            <option value="1">Servidor AE</option>
           </select>
         </div>
         <div class="d-grid mb-3">
@@ -129,7 +115,7 @@ if (isset($_POST['cadastrar'])) {
       </form>
     <?php else: ?>
       <div class="text-center mt-3">
-        <a href="login.php" class="btn btn-success">Ir para login</a>
+        <a href="login.php" name="login" class="btn btn-success">Ir para login</a>
       </div>
     <?php endif; ?>
 
@@ -142,4 +128,3 @@ if (isset($_POST['cadastrar'])) {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-

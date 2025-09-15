@@ -2,6 +2,11 @@
 // Inclui o arquivo de conexão com o banco de dados
 require_once 'conexao.php';
 
+$conexao = new mysqli("localhost", "root", "", "sudae");
+if ($conexao->connect_error) {
+    die("Erro na conexão: " . $conexao->connect_error);
+}
+
 // Função para sanitizar dados de entrada
 if (!function_exists('sanitize_input')) {
 	function sanitize_input($data) {

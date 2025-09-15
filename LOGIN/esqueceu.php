@@ -1,11 +1,4 @@
-
-<a href="javascript:history.back()" class="btn btn-success p-2" style="border-radius: 50%;">
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="white" class="bi bi-arrow-left" viewBox="0 0 16 16">
-        <path fill-rule="evenodd" d="M15 8a.5.5 0 0 1-.5.5H2.707l4.147 4.146a.5.5 0 0 1-.708.708l-5-5a.5.5 0 0 1 0-.708l5-5a.5.5 0 1 1 .708.708L2.707 7.5H14.5A.5.5 0 0 1 15 8z"/>
-    </svg>
-</a>
-
-<?php include 'conexao.php';
+<?php include '../conexao.php';
 
 $mensagem = '';
 $linkReset = '';
@@ -18,9 +11,9 @@ if (isset($_POST['recuperar'])) {
 
     if ($res->num_rows === 1) {
         $linkReset = "redefinir.php?matricula=$matricula";
-        $mensagem = "<strong>Matrícula encontrada.</strong> <br><a href='$linkReset' class='btn btn-success mt-2'>Clique aqui para redefinir sua senha</a>";
+        $mensagem = "<strong>Matricula encontrada.</strong> <br><a href='$linkReset' class='btn btn-success mt-2'>Clique aqui para redefinir sua senha</a>";
     } else {
-        $mensagem = "<span class='text-danger'>Matrícula não encontrada.</span>";
+        $mensagem = "<span class='text-danger'>Matricula não encontrada.</span>";
     }
 }
 ?>
@@ -89,8 +82,8 @@ if (isset($_POST['recuperar'])) {
     <?php if (!$linkReset): ?>
       <form method="POST">
         <div class="mb-3">
-          <label for="matricula" class="form-label">Digite sua matrícula</label>
-          <input type="text" name="matricula" class="form-control" required>
+          <label for="matricula" class="form-label">Digite sua matricula</label>
+          <input type="matricula" name="matricula" class="form-control" required>
         </div>
         <div class="d-grid mb-3">
           <button type="submit" name="recuperar" class="btn btn-recuperar text-white">Recuperar</button>
@@ -98,5 +91,12 @@ if (isset($_POST['recuperar'])) {
       </form>
     <?php endif; ?>
 
-    <div class=
+    <div class="recuperar-links text-center mt-3">
+      <a href="login.php">Voltar ao login</a>
+    </div>
+  </div>
+</div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
