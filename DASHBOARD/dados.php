@@ -21,9 +21,6 @@ $stmt->execute();
 $result = $stmt->get_result();
 $usuario = $result->fetch_assoc();
 
-
-
-
 $qrcode = "https://quickchart.io/qr?text=" . urlencode($matricula);
 ?>
 

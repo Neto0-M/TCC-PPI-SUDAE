@@ -121,6 +121,8 @@ if (isset($_POST['cadastrar'])) {
 
     <div class="cadastro-links text-center mt-3">
       <a href="login.php">Já tem conta? Faça login</a>
+      <br>
+      <a href="../DASHBOARD/dashboard.php">Voltar</a>
     </div>
   </div>
 </div>

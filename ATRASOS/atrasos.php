@@ -114,6 +114,8 @@ textarea { height: 60px; resize: vertical; }
 .btn { padding: 6px 12px; margin-right: 6px; background: #007BFF; color: white; border: none; cursor: pointer; }
 .btn:hover { background: #0056b3; }
 a { text-decoration: none; color: #007BFF; }
+.qr {color: white;}
+.qr:hover{text-decoration: none;}
 a:hover { text-decoration: underline; }
 .cancel { background:#6c757d; color:white; padding:6px 12px; margin-left:5px; }
 </style>
@@ -149,6 +151,14 @@ a:hover { text-decoration: underline; }
         <textarea name="motivo_extra"><?= htmlspecialchars($edit ? (explode(" - ", $edit['motivo'])[1] ?? '') : '') ?></textarea>
     </label><br>
     <button class="btn" type="submit"><?= $edit ? 'Salvar Alterações' : 'Registrar Atraso' ?></button>
+    <button class="btn"> 
+        <a href="../ATRASOS_SCAN/scanner.php" class="qr">Registrar via QR code</a> 
+    </button>
+    <button class="btn"> 
+        <a href="../DASHBOARD/dashboard.php" class="qr">Voltar</a> 
+    </button>
+
+
     <?php if ($edit): ?>
         <a href="atrasos.php" class="cancel">Cancelar</a>
     <?php endif; ?>

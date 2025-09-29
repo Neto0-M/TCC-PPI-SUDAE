@@ -13,21 +13,24 @@ if (isset($_POST['login'])) {
     $res = $conexao->query($sql);
 
     if ($res->num_rows === 1) {
-        $usuario = $res->fetch_assoc();
+    $usuario = $res->fetch_assoc();
 
-        // salva na sessão
-        $_SESSION['usuario'] = [
-            'idUSUARIO' => $usuario['idUSUARIO'],
-            'nome'      => $usuario['nome'],
-            'tipo'      => $usuario['tipo'],
-            'matricula' => $usuario['matricula']
-        ];
+    // salva na sessão
+    $_SESSION['usuario'] = [
+        'idUSUARIO' => $usuario['idUSUARIO'],
+        'nome'      => $usuario['nome'],
+        'tipo'      => $usuario['tipo'],
+        'matricula' => $usuario['matricula']
+    ];
 
-        header("Location: ../DASHBOARD/dashboard.php");
-        exit;
-    } else {
-        $mensagem = "Login inválido!";
-    }
+    $sucesso = true; // <-- adiciona isso!
+
+    header("Location: ../DASHBOARD/dashboard.php");
+    exit;
+  } else {
+    $mensagem = "Login inválido!";
+  }
+
 }
 ?>
 
