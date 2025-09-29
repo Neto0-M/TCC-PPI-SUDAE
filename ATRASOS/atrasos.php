@@ -1,59 +1,102 @@
-<?php  
-include '../conexao.php';
+<?php
+include '../conexao.php'; // conexão com banco SUDAE
 
-// Função para formatar data
+// === FUNÇÃO PARA FORMATAR DATA ===
 function data_br($data) {
     return date('d/m/Y', strtotime($data));
 }
 
+// === LISTAR ALUNOS PARA O FORMULÁRIO ===
+$alunos = [];
+$result = $conn->query("SELECT idUSUARIO, nome, matricula FROM USUARIO WHERE tipo = 3 ORDER BY nome ASC");
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $alunos[] = $row;
+    }
+}
+
 // === PROCESSAMENTO DO FORMULÁRIO ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id           = isset($_POST['id']) ? intval($_POST['id']) : 0;
-    $matricula    = trim($_POST['matricula']);
-    $data         = $_POST['data'];
-    $motivo       = trim($_POST['motivo']);
+    $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
+    $matricula = $conn->real_escape_string($_POST['matricula']);
+    $data = $conn->real_escape_string($_POST['data']);
+    $motivo = $conn->real_escape_string($_POST['motivo']);
     $motivo_extra = trim($_POST['motivo_extra']);
 
-    // Junta motivo fixo + extra
     if (!empty($motivo_extra)) {
-        $motivo = $motivo . " - " . $motivo_extra;
+        $motivo .= " - " . $motivo_extra;
     }
+
+    // Busca idAluno a partir da matrícula
+    $stmt = $conn->prepare("SELECT idUSUARIO FROM USUARIO WHERE matricula = ?");
+    $stmt->bind_param("s", $matricula);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $aluno = $result->fetch_assoc();
+    $stmt->close();
+
+    if (!$aluno) {
+        die("Aluno não encontrado.");
+    }
+    $idAluno = $aluno['idUSUARIO'];
+    $idServidor = 1; // exemplo: servidor logado, ajustar conforme seu sistema
 
     if ($id > 0) {
-        // Atualizar registro
-        $stmt = $db->prepare("UPDATE atrasos SET matricula=?, data=?, motivo=? WHERE id=?");
-        $stmt->execute([$matricula, $data, $motivo, $id]);
+        // Atualiza registro
+        $stmt = $conn->prepare("UPDATE ATRASO SET idAluno=?, data=?, notificado='N', motivo=? WHERE idATRASO=?");
+        $stmt->bind_param("issi", $idAluno, $data, $motivo, $id);
+        $stmt->execute();
+        $stmt->close();
     } else {
-        // Inserir novo registro
-        $stmt = $db->prepare("INSERT INTO atrasos (matricula, data, motivo) VALUES (?, ?, ?)");
-        $stmt->execute([$matricula, $data, $motivo]);
+        // Insere novo registro
+        $stmt = $conn->prepare("INSERT INTO ATRASO (idAluno, idServidor, data, notificado, motivo) VALUES (?, ?, ?, 'N', ?)");
+        $stmt->bind_param("iiss", $idAluno, $idServidor, $data, $motivo);
+        $stmt->execute();
+        $stmt->close();
     }
 
-    header("Location: atrasos.php");
+    header("Location: " . $_SERVER['PHP_SELF']);
     exit;
 }
 
 // === EXCLUIR REGISTRO ===
 if (isset($_GET['delete'])) {
-    $stmt = $db->prepare("DELETE FROM atrasos WHERE id=?");
-    $stmt->execute([intval($_GET['delete'])]);
-    header("Location: atrasos.php");
+    $id = intval($_GET['delete']);
+    $stmt = $conn->prepare("DELETE FROM ATRASO WHERE idATRASO=?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $stmt->close();
+    header("Location: " . $_SERVER['PHP_SELF']);
     exit;
 }
 
 // === EDITAR REGISTRO ===
 $edit = null;
 if (isset($_GET['edit'])) {
-    $stmt = $db->prepare("SELECT * FROM atrasos WHERE id=?");
-    $stmt->execute([intval($_GET['edit'])]);
-    $edit = $stmt->fetch(PDO::FETCH_ASSOC);
+    $id = intval($_GET['edit']);
+    $stmt = $conn->prepare("SELECT a.idATRASO, a.data, u.matricula, u.nome, a.motivo
+                            FROM ATRASO a
+                            INNER JOIN USUARIO u ON a.idAluno = u.idUSUARIO
+                            WHERE a.idATRASO = ?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $edit = $result->fetch_assoc();
+    $stmt->close();
 }
 
-// === LISTAR TODOS OS REGISTROS ===
-$conexao = $conn->query("
-    SELECT * FROM atraso
-    ORDER BY SUBSTR(IdAluno, 1, 4) DESC, data DESC, IdAtraso DESC
-");
+// === LISTAR ATRASOS ===
+$atrasos = [];
+$sql = "SELECT a.idATRASO, a.data, u.matricula, u.nome, a.motivo
+        FROM ATRASO a
+        INNER JOIN USUARIO u ON a.idAluno = u.idUSUARIO
+        ORDER BY a.data DESC";
+$result = $conn->query($sql);
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $atrasos[] = $row;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -119,14 +162,14 @@ a:hover { text-decoration: underline; }
         <th>Motivo</th>
         <th>Ações</th>
     </tr>
-    <?php foreach ($conexao as $a): ?>
+    <?php foreach ($atrasos as $a): ?>
     <tr>
         <td><?= htmlspecialchars($a['matricula']) ?></td>
         <td><?= data_br($a['data']) ?></td>
         <td><?= nl2br(htmlspecialchars($a['motivo'])) ?></td>
         <td>
-            <a href="?edit=<?= $a['id'] ?>">Editar</a> |
-            <a href="?delete=<?= $a['id'] ?>" onclick="return confirm('Deseja excluir este registro?')">Excluir</a>
+            <a href="?edit=<?= $a['idATRASO'] ?>">Editar</a> |
+            <a href="?delete=<?= $a['idATRASO'] ?>" onclick="return confirm('Deseja excluir este registro?')">Excluir</a>
         </td>
     </tr>
     <?php endforeach; ?>
@@ -134,7 +177,6 @@ a:hover { text-decoration: underline; }
         <tr><td colspan="4">Nenhum registro encontrado.</td></tr>
     <?php endif; ?>
 </table>
+</table>
 </body>
 </html>
-
-
