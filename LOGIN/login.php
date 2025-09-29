@@ -125,12 +125,15 @@ if (isset($_POST['login'])) {
           <button type="submit" name="login" class="btn btn-login text-white">Entrar</button>
         </div>
       </form>
-
-      <div class="login-links text-center">
-        <a href="cadastro.php">Cadastrar-se</a> | 
+        <div class="login-links text-center">
+        <span class="text-muted d-block mb-2">
+          Para criar uma conta, procure a <strong>Assistência Estudantil</strong>.
+        </span>
         <a href="esqueceu.php">Esqueci minha senha</a>
       </div>
     <?php endif; ?>
+  </div>
+</div>
   </div>
 </div>
 

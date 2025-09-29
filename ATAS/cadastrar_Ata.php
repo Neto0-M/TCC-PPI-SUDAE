@@ -105,7 +105,7 @@ if (!$result) {
     <button type="submit"><?php echo $ata_edit ? "Atualizar" : "Salvar"; ?></button>
 </form>
 
-<a href="dashboard.php">Voltar</a>
+<a href="../DASHBOARD/dashboard.php">Voltar</a>
 
 <h2>ATAs Registradas</h2>
 
