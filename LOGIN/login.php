@@ -7,30 +7,35 @@ $sucesso = false;
 
 if (isset($_POST['login'])) {
     $matricula = $_POST['matricula'];
-    $senha = md5($_POST['senha']);
+    $senhaDigitada = $_POST['senha']; // senha em texto puro
 
-    $sql = "SELECT * FROM usuario WHERE matricula='$matricula' AND senha='$senha'";
+    // Busca usuário pelo número de matrícula
+    $sql = "SELECT * FROM usuario WHERE matricula='$matricula' LIMIT 1";
     $res = $conexao->query($sql);
 
     if ($res->num_rows === 1) {
-    $usuario = $res->fetch_assoc();
+        $usuario = $res->fetch_assoc();
 
-    // salva na sessão
-    $_SESSION['usuario'] = [
-        'idUSUARIO' => $usuario['idUSUARIO'],
-        'nome'      => $usuario['nome'],
-        'tipo'      => $usuario['tipo'],
-        'matricula' => $usuario['matricula']
-    ];
+        // Verificação da senha com password_verify
+        if (password_verify($senhaDigitada, $usuario['senha'])) {
+            // Salva na sessão
+            $_SESSION['usuario'] = [
+                'idUSUARIO' => $usuario['idUSUARIO'],
+                'nome'      => $usuario['nome'],
+                'tipo'      => $usuario['tipo'],
+                'matricula' => $usuario['matricula']
+            ];
 
-    $sucesso = true; // <-- adiciona isso!
+            $sucesso = true;
 
-    header("Location: ../DASHBOARD/dashboard.php");
-    exit;
-  } else {
-    $mensagem = "Login inválido!";
-  }
-
+            header("Location: ../DASHBOARD/dashboard.php");
+            exit;
+        } else {
+            $mensagem = "Senha incorreta!";
+        }
+    } else {
+        $mensagem = "Usuário não encontrado!";
+    }
 }
 ?>
 
@@ -116,7 +121,7 @@ if (isset($_POST['login'])) {
       <form method="POST">
         <div class="mb-3">
           <label for="matricula" class="form-label">Matricula</label>
-          <input type="matricula" name="matricula" class="form-control" required>
+          <input type="text" name="matricula" class="form-control" required>
         </div>
 
         <div class="mb-3">
@@ -137,10 +142,10 @@ if (isset($_POST['login'])) {
     <?php endif; ?>
   </div>
 </div>
-  </div>
-</div>
 
- 
+
+
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

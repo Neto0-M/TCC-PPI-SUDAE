@@ -1,5 +1,7 @@
-<?php include '../conexao.php'; ?>
-<?php $matricula = $_GET['matricula'] ?? ''; ?>
+<?php 
+include '../conexao.php'; 
+$matricula = $_GET['matricula'] ?? '';
+?>
 
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -57,7 +59,7 @@
 
     <?php
     if (isset($_POST['redefinir'])) {
-        $nova = $_POST['nova_senha'];
+        $nova = password_hash($_POST['nova_senha'], PASSWORD_DEFAULT); // 🔑 hash seguro
         $matricula = $_POST['matricula'];
 
         $sql = "UPDATE usuario SET senha='$nova' WHERE matricula='$matricula'";
@@ -70,6 +72,7 @@
     ?>
   </div>
 </div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>

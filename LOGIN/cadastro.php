@@ -4,16 +4,15 @@ include '../conexao.php';
 $mensagem = '';
 $sucesso = false;
 
-
 if (isset($_POST['cadastrar'])) {
     $nome = $_POST['nome'];
     $matricula = $_POST['matricula'];
-    $senha = md5($_POST['senha']);
+    $senha = password_hash($_POST['senha'], PASSWORD_DEFAULT); // 🔑 corrigido
     $tipo = $_POST['tipo'];
     $login = $matricula;
 
     $sql = "INSERT INTO usuario (nome, matricula, login, senha, tipo) 
-        VALUES ('$nome', '$matricula', '$login', '$senha', '$tipo')";
+            VALUES ('$nome', '$matricula', '$login', '$senha', '$tipo')";
     if ($conexao->query($sql)) {
         $mensagem = "Cadastro realizado com sucesso!";
         $sucesso = true;
@@ -126,6 +125,7 @@ if (isset($_POST['cadastrar'])) {
     </div>
   </div>
 </div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>

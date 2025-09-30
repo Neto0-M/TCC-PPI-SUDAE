@@ -89,29 +89,19 @@ CREATE TABLE IF NOT EXISTS `SUDAE`.`PARTICIPANTES` (
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
-DELIMITER //
-
-CREATE TRIGGER before_insert_usuario
-BEFORE INSERT ON USUARIO
-FOR EACH ROW
-BEGIN
-  SET NEW.senha = MD5(NEW.senha);
-END;
-//
-
-CREATE TRIGGER before_update_usuario
-BEFORE UPDATE ON USUARIO
-FOR EACH ROW
-BEGIN
-  SET NEW.senha = MD5(NEW.senha);
-END;
-//
-
-DELIMITER ;
-
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 
 
-
+-- Para usar o site, temos um usuário teste:
+INSERT INTO USUARIO (nome, matricula, login, senha, tipo, curso, turma)
+VALUES (
+  'servidor AE',
+  '0123456789',
+  'servidor',
+  'teste', -- redefina a senha para funcionar
+  1,
+  NULL,
+  NULL
+);

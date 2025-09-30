@@ -1,19 +1,38 @@
-<?php include '../conexao.php';
+```php
+<?php 
+include '../conexao.php'; 
 
+$etapa = 1; // 1 = pedir matrícula, 2 = redefinir senha
 $mensagem = '';
-$linkReset = '';
 
-if (isset($_POST['recuperar'])) {
-    $matricula = $_POST['matricula'];
-
-    $sql = "SELECT * FROM usuario WHERE matricula='$matricula'";
-    $res = $conexao->query($sql);
+if (isset($_POST['verificar'])) {
+    $matricula = trim($_POST['matricula']);
+    $sql = "SELECT * FROM usuario WHERE matricula = ?";
+    $stmt = $conexao->prepare($sql);
+    $stmt->bind_param("s", $matricula);
+    $stmt->execute();
+    $res = $stmt->get_result();
 
     if ($res->num_rows === 1) {
-        $linkReset = "redefinir.php?matricula=$matricula";
-        $mensagem = "<strong>Matricula encontrada.</strong> <br><a href='$linkReset' class='btn btn-success mt-2'>Clique aqui para redefinir sua senha</a>";
+        $etapa = 2; // matrícula encontrada, pode redefinir
     } else {
-        $mensagem = "<span class='text-danger'>Matricula não encontrada.</span>";
+        $mensagem = "<div class='alert alert-danger mt-3'>Matrícula não encontrada!</div>";
+    }
+}
+
+if (isset($_POST['redefinir'])) {
+    $nova_senha = password_hash($_POST['nova_senha'], PASSWORD_DEFAULT);
+    $matricula = $_POST['matricula'];
+
+    $sql = "UPDATE usuario SET senha=? WHERE matricula=?";
+    $stmt = $conexao->prepare($sql);
+    $stmt->bind_param("ss", $nova_senha, $matricula);
+
+    if ($stmt->execute()) {
+        $mensagem = "<div class='alert alert-success mt-3'>Senha redefinida com sucesso! <a href='login.php'>Fazer login</a></div>";
+        $etapa = 0; // finalizado
+    } else {
+        $mensagem = "<div class='alert alert-danger mt-3'>Erro ao redefinir senha.</div>";
     }
 }
 ?>
@@ -22,7 +41,7 @@ if (isset($_POST['recuperar'])) {
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Recuperar Senha - SUDAE</title>
+  <title>Esqueci a Senha - SUDAE</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
@@ -30,69 +49,61 @@ if (isset($_POST['recuperar'])) {
       background-color: #e6f4ec;
       font-family: 'Segoe UI', sans-serif;
     }
-    .recuperar-container {
-      min-height: 100vh;
+    .container-reset {
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
+      min-height: 100vh;
     }
-    .recuperar-box {
+    .reset-box {
       background: #fff;
-      padding: 2.5rem;
+      padding: 2rem;
       border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
       width: 100%;
       max-width: 500px;
     }
-    .recuperar-title {
+    .reset-box h2 {
       color: #198754;
-      font-weight: 600;
       margin-bottom: 1.5rem;
-    }
-    .btn-recuperar {
-      background-color: #198754;
-      border: none;
-    }
-    .btn-recuperar:hover {
-      background-color: #146c43;
+      text-align: center;
     }
     .form-control:focus {
-      box-shadow: none;
       border-color: #198754;
-    }
-    .recuperar-links a {
-      color: #198754;
-      text-decoration: none;
-    }
-    .recuperar-links a:hover {
-      text-decoration: underline;
+      box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
     }
   </style>
 </head>
 <body>
 
-<div class="recuperar-container">
-  <div class="recuperar-box">
-    <h3 class="text-center recuperar-title">Recuperar Senha</h3>
+<div class="container-reset">
+  <div class="reset-box">
+    <h2>Redefinir Senha</h2>
 
-    <?php if ($mensagem): ?>
-      <div class="alert alert-info text-center"><?= $mensagem ?></div>
-    <?php endif; ?>
-
-    <?php if (!$linkReset): ?>
+    <?php if ($etapa === 1): ?>
       <form method="POST">
         <div class="mb-3">
-          <label for="matricula" class="form-label">Digite sua matricula</label>
-          <input type="matricula" name="matricula" class="form-control" required>
+          <label for="matricula" class="form-label">Informe sua matrícula</label>
+          <input type="text" class="form-control" name="matricula" id="matricula" required>
         </div>
-        <div class="d-grid mb-3">
-          <button type="submit" name="recuperar" class="btn btn-recuperar text-white">Recuperar</button>
+        <button type="submit" name="verificar" class="btn btn-success w-100">Continuar</button>
+      </form>
+
+    <?php elseif ($etapa === 2): ?>
+      <form method="POST">
+        <div class="mb-3">
+          <label for="nova_senha" class="form-label">Nova senha</label>
+          <input type="password" class="form-control" name="nova_senha" id="nova_senha" required>
         </div>
+        <input type="hidden" name="matricula" value="<?= htmlspecialchars($matricula) ?>">
+        <button type="submit" name="redefinir" class="btn btn-success w-100">Redefinir Senha</button>
       </form>
     <?php endif; ?>
 
-    <div class="recuperar-links text-center mt-3">
-      <a href="login.php">Voltar ao login</a>
+    <?= $mensagem ?>
+
+    <div class="mt-3 text-center">
+      <a href="login.php" class="text-decoration-none">Voltar ao login</a>
     </div>
   </div>
 </div>
@@ -100,3 +111,4 @@ if (isset($_POST['recuperar'])) {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+```
