@@ -1,59 +1,68 @@
-<?php 
-require_once '../conexao.php'; 
+<?php
+require_once '../conexao.php';
+session_start();
+
+// 🔒 Verifica se o usuário está logado
+if (!isset($_SESSION['usuario'])) {
+    header("Location: ../LOGIN/login.php");
+    exit;
+}
+
+$idRedator = $_SESSION['usuario']['idUSUARIO']; // redator = usuário logado
 
 // ====== Cadastrar nova ATA ======
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['acao'] === 'cadastrar') {
-    $data = $_POST['data'];
+    $data = date("Y-m-d H:i:s", strtotime($_POST['data']));
     $assunto = $_POST['assunto'];
     $anotacoes = $_POST['anotacoes'];
     $encaminhamentos = $_POST['encaminhamentos'];
-    $idRedator = $_POST['idRedator'];
+    $participantes = $_POST['participantes'] ?? []; // array de IDs de usuários
 
-    // Corrected INSERT statement: DO NOT insert the idATA as it is AUTO_INCREMENT
-    $sql = "INSERT INTO ATA (data, assunto, anotacoes, encaminhamentos, idRedator) VALUES (?, ?, ?, ?, ?)";
+    // 1) Inserir na tabela ATA
+    $sql = "INSERT INTO ATA (data, assunto, anotacoes, encaminhamentos, idRedator) 
+            VALUES (?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ssssi", $data, $assunto, $anotacoes, $encaminhamentos, $idRedator);
-    $stmt->execute();
-}
 
-// ====== Atualizar (Edit) ======
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['acao'] === 'editar') {
-    $idATA = $_POST['idATA'];
-    $data = $_POST['data'];
-    $assunto = $_POST['assunto'];
-    $anotacoes = $_POST['anotacoes'];
-    $encaminhamentos = $_POST['encaminhamentos'];
-    $idRedator = $_POST['idRedator'];
+    if ($stmt->execute()) {
+        $idAta = $stmt->insert_id; // pega o ID da ATA inserida
 
-    // Update ATA record
-    $sql = "UPDATE ATA SET data=?, assunto=?, anotacoes=?, encaminhamentos=?, idRedator=? WHERE idATA=?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssssii", $data, $assunto, $anotacoes, $encaminhamentos, $idRedator, $idATA);
-    $stmt->execute();
+        // 2) Inserir os participantes selecionados
+        $sql_part = "INSERT INTO PARTICIPANTES (idAta, idUSUARIO, dataRegistro, assinatura) 
+                     VALUES (?, ?, NOW(), 'N')";
+        $stmt_part = $conn->prepare($sql_part);
+
+        foreach ($participantes as $idUsuario) {
+            $stmt_part->bind_param("ii", $idAta, $idUsuario);
+            $stmt_part->execute();
+        }
+
+        echo "<p>ATA cadastrada com sucesso!</p>";
+    } else {
+        echo "<p>Erro ao cadastrar: " . $stmt->error . "</p>";
+    }
 }
 
 // ====== Excluir ======
 if (isset($_GET['delete'])) {
     $idATA = $_GET['delete'];
+
+    // exclui automaticamente da tabela PARTICIPANTES (por causa do ON DELETE CASCADE)
     $sql = "DELETE FROM ATA WHERE idATA=?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $idATA);
     $stmt->execute();
 }
 
-// ====== Carregar dados para edição ======
-$ata_edit = null;
-if (isset($_GET['edit'])) {
-    $idATA = $_GET['edit'];
-    $sql = "SELECT * FROM ATA WHERE idATA=?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $idATA);
-    $stmt->execute();
-    $ata_edit = $stmt->get_result()->fetch_assoc();
-}
-
 // ====== Listar todas ======
-$sql_listar = "SELECT ATA.idATA, ATA.data, ATA.assunto, ATA.idRedator, USUARIO.nome AS redator FROM ATA INNER JOIN USUARIO ON ATA.idRedator = USUARIO.idUSUARIO ORDER BY ATA.data DESC";
+$sql_listar = "SELECT A.idATA, A.data, A.assunto, U.nome AS redator,
+                      GROUP_CONCAT(PU.nome SEPARATOR ', ') AS participantes
+               FROM ATA A
+               INNER JOIN USUARIO U ON A.idRedator = U.idUSUARIO
+               LEFT JOIN PARTICIPANTES P ON A.idATA = P.idAta
+               LEFT JOIN USUARIO PU ON P.idUSUARIO = PU.idUSUARIO
+               GROUP BY A.idATA
+               ORDER BY A.data DESC";
 $result = $conn->query($sql_listar);
 if (!$result) {
     die("Erro ao listar ATAs: " . $conn->error);
@@ -68,77 +77,70 @@ if (!$result) {
 </head>
 <body>
 
-<h2><?php echo $ata_edit ? "Editar ATA" : "Cadastrar nova ATA"; ?></h2>
+<h2>Cadastrar nova ATA</h2>
 
-<!-- Formulário de Cadastro ou Edição -->
 <form method="POST">
-    <input type="hidden" name="acao" value="<?php echo $ata_edit ? "editar" : "cadastrar"; ?>">
-
-    <?php if ($ata_edit): ?>
-        <input type="hidden" name="idATA" value="<?php echo $ata_edit['idATA']; ?>">
-    <?php endif; ?>
+    <input type="hidden" name="acao" value="cadastrar">
 
     <label>Data:</label>
-    <input type="datetime-local" name="data" value="<?php echo $ata_edit['data'] ?? ''; ?>" required><br><br>
+    <input type="datetime-local" name="data" required><br><br>
 
     <label>Assunto:</label>
-    <input type="text" name="assunto" value="<?php echo $ata_edit['assunto'] ?? ''; ?>" required><br><br>
+    <input type="text" name="assunto" required><br><br>
 
     <label>Conteúdo ATA:</label>
-    <textarea name="anotacoes" required><?php echo $ata_edit['anotacoes'] ?? ''; ?></textarea><br><br>
+    <textarea name="anotacoes" required></textarea><br><br>
 
     <label>Encaminhamentos:</label>
-    <textarea name="encaminhamentos"><?php echo $ata_edit['encaminhamentos'] ?? ''; ?></textarea><br><br>
+    <textarea name="encaminhamentos"></textarea><br><br>
+<label>Participantes:</label><br>
+<select name="participantes[]" multiple required>
+    <?php
+    $usuarios = $conn->query("SELECT idUSUARIO, nome, tipo FROM USUARIO WHERE tipo IN (2,3)"); // só professores e alunos
+    while ($u = $usuarios->fetch_assoc()) {
+        $tipo = ($u['tipo'] == 2) ? "Professor" : "Aluno";
+        echo "<option value='{$u['idUSUARIO']}'>{$u['nome']} ({$tipo})</option>";
+    }
+    ?>
+</select>
+<br>
 
-    <label>Redator:</label>
-    <select name="idRedator" required>
-        <option value="">-- Selecione --</option>
-        <?php
-        $usuarios = $conn->query("SELECT idUSUARIO, nome FROM USUARIO");
-        while ($u = $usuarios->fetch_assoc()) {
-            $selected = ($ata_edit && $ata_edit['idRedator'] == $u['idUSUARIO']) ? "selected" : "";
-            echo "<option value='{$u['idUSUARIO']}' $selected>{$u['nome']}</option>";
-        }
-        ?>
-    </select><br><br>
-
-    <button type="submit"><?php echo $ata_edit ? "Atualizar" : "Salvar"; ?></button>
+    <button type="submit">Salvar</button>
 </form>
 
 <a href="../DASHBOARD/dashboard.php">Voltar</a>
 
 <h2>ATAs Registradas</h2>
 
-<!-- Lista de ATAs -->
 <table border="2" cellpadding="3">
     <tr>
         <th>ID</th>
         <th>Data</th>
         <th>Assunto</th>
         <th>Redator</th>
+        <th>Participantes</th>
         <th>Ações</th>
     </tr>
 
-    <?php if (isset($result) && $result): ?>
+    <?php if ($result && $result->num_rows > 0): ?>
         <?php while ($ata = $result->fetch_assoc()): ?>
             <tr>
                 <td><?php echo $ata['idATA']; ?></td>
                 <td><?php echo $ata['data']; ?></td>
                 <td><?php echo $ata['assunto']; ?></td>
                 <td><?php echo $ata['redator']; ?></td>
+                <td><?php echo $ata['participantes'] ?: 'Nenhum'; ?></td>
                 <td>
-                    <a href="?edit=<?php echo $ata['idATA']; ?>">Editar</a> | 
                     <a href="?delete=<?php echo $ata['idATA']; ?>" onclick="return confirm('Deseja excluir esta ATA?')">Excluir</a>
                 </td>
             </tr>
         <?php endwhile; ?>
     <?php else: ?>
         <tr>
-            <td colspan="5">Nenhuma ATA encontrada.</td>
+            <td colspan="6">Nenhuma ATA encontrada.</td>
         </tr>
     <?php endif; ?>
 </table>
 
 </body>
 </html>
-
