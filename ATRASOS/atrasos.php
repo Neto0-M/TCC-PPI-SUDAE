@@ -1,5 +1,5 @@
 <?php
-include '../conexao.php'; // conexão com banco SUDAE
+include 'conexao.php'; // conexão com banco SUDAE
 
 // === FUNÇÃO PARA FORMATAR DATA ===
 function data_br($data) {
@@ -15,6 +15,15 @@ if ($result) {
     }
 }
 
+// === LISTAR PROFESSORES PARA O FORMULÁRIO ===
+$professores = [];
+$result = $conn->query("SELECT idUSUARIO, nome, email FROM USUARIO WHERE tipo = 2 ORDER BY nome ASC");
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $professores[] = $row;
+    }
+}
+
 // === PROCESSAMENTO DO FORMULÁRIO ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
@@ -22,13 +31,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = $conn->real_escape_string($_POST['data']);
     $motivo = $conn->real_escape_string($_POST['motivo']);
     $motivo_extra = trim($_POST['motivo_extra']);
+    $idProfessor = isset($_POST['idProfessor']) ? intval($_POST['idProfessor']) : 0;
 
     if (!empty($motivo_extra)) {
         $motivo .= " - " . $motivo_extra;
     }
 
     // Busca idAluno a partir da matrícula
-    $stmt = $conn->prepare("SELECT idUSUARIO FROM USUARIO WHERE matricula = ?");
+    $stmt = $conn->prepare("SELECT idUSUARIO, nome FROM USUARIO WHERE matricula = ?");
     $stmt->bind_param("s", $matricula);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -39,6 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         die("Aluno não encontrado.");
     }
     $idAluno = $aluno['idUSUARIO'];
+
     $idServidor = 1; // exemplo: servidor logado, ajustar conforme seu sistema
 
     if ($id > 0) {
@@ -53,6 +64,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bind_param("iiss", $idAluno, $idServidor, $data, $motivo);
         $stmt->execute();
         $stmt->close();
+    }
+
+    // Enviar email para o professor selecionado
+    if ($idProfessor > 0) {
+        $stmt = $conn->prepare("SELECT nome, email FROM USUARIO WHERE idUSUARIO = ? AND tipo = 2");
+        $stmt->bind_param("i", $idProfessor);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $professor = $result->fetch_assoc();
+        $stmt->close();
+
+        if ($professor) {
+            $to = $professor['email'];
+            $subject = "Registro de atraso do aluno " . $aluno['nome'];
+            $message = "Prezado(a) Professor(a) " . $professor['nome'] . ",\n\n";
+            $message .= "Foi registrado um atraso para o aluno com matrícula: $matricula\n";
+            $message .= "Data: " . date('d/m/Y', strtotime($data)) . "\n";
+            $message .= "Motivo: $motivo\n\n";
+            $message .= "Atenciosamente,\nSistema de Registro de Atrasos";
+
+            $headers = "From: no-reply@seusite.com.br\r\n" .
+                       "Reply-To: no-reply@seusite.com.br\r\n" .
+                       "X-Mailer: PHP/" . phpversion();
+
+            mail($to, $subject, $message, $headers);
+        }
     }
 
     header("Location: " . $_SERVER['PHP_SELF']);
@@ -125,7 +162,7 @@ a:hover { text-decoration: underline; }
 
 <!-- FORMULÁRIO CADASTRO / EDIÇÃO -->
 <form method="post">
-    <input type="hidden" name="id" value="<?= $edit['id'] ?? '' ?>">
+    <input type="hidden" name="id" value="<?= $edit['idATRASO'] ?? '' ?>">
     <label>Matrícula:<br>
         <input type="text" name="matricula" required pattern="\d{4}\d*" 
                title="A matrícula deve começar com o ano (4 dígitos)" 
@@ -134,10 +171,24 @@ a:hover { text-decoration: underline; }
     <label>Data:<br>
         <input type="date" name="data" required value="<?= htmlspecialchars($edit['data'] ?? date('Y-m-d')) ?>">
     </label><br>
+
+    <label>Professor:<br>
+        <select name="idProfessor" required>
+            <option value="">Selecione um professor</option>
+            <?php
+            $professorSelecionado = $_POST['idProfessor'] ?? '';
+            foreach ($professores as $prof) {
+                $selected = ($professorSelecionado == $prof['idUSUARIO']) ? 'selected' : '';
+                echo "<option value=\"{$prof['idUSUARIO']}\" $selected>{$prof['nome']} ({$prof['email']})</option>";
+            }
+            ?>
+        </select>
+    </label><br>
+
     <label>Motivo:<br>
         <select name="motivo" required>
             <?php 
-            $motivos = ["Sem justifica", "Atraso do Ônibus", "Consulta de Exames", "Outros"];
+            $motivos = ["Sem justifica", "Motivos de Saúde", "Chuva Forte", "Atraso do Ônibus", "Consulta de Exames", "Outros"];
             $motivoAtual = $edit['motivo'] ?? '';
             $motivoBase = explode(" - ", $motivoAtual)[0] ?? ''; 
             foreach ($motivos as $m) {
@@ -157,7 +208,6 @@ a:hover { text-decoration: underline; }
     <button class="btn"> 
         <a href="../DASHBOARD/dashboard.php" class="qr">Voltar</a> 
     </button>
-
 
     <?php if ($edit): ?>
         <a href="atrasos.php" class="cancel">Cancelar</a>
@@ -187,6 +237,6 @@ a:hover { text-decoration: underline; }
         <tr><td colspan="4">Nenhum registro encontrado.</td></tr>
     <?php endif; ?>
 </table>
-</table>
+
 </body>
 </html>

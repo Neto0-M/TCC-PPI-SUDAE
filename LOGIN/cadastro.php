@@ -4,7 +4,7 @@ include '../conexao.php';
 $mensagem = '';
 $sucesso = false;
 
-// Função para validar senha (agora com somente a exigência de 8 caracteres)
+// 🔒 Função para validar senha (agora com somente a exigência de 8 caracteres)
 function validarSenha($senha) {
     $erros = [];
 
@@ -28,16 +28,27 @@ if (isset($_POST['cadastrar'])) {
     if (!empty($errosSenha)) {
         $mensagem = implode("<br>", $errosSenha);
     } else {
-        $senha = password_hash($senhaDigitada, PASSWORD_DEFAULT);
+        // 🔎 Verificar se já existe a matrícula
+        $check = $conexao->prepare("SELECT matricula FROM usuario WHERE matricula = ?");
+        $check->bind_param("s", $matricula);
+        $check->execute();
+        $check->store_result();
 
-        $sql = "INSERT INTO usuario (nome, matricula, login, senha, tipo) 
-                VALUES ('$nome', '$matricula', '$login', '$senha', '$tipo')";
-        if ($conexao->query($sql)) {
-            $mensagem = "Cadastro realizado com sucesso!";
-            $sucesso = true;
+        if ($check->num_rows > 0) {
+            $mensagem = "Erro: Já existe um usuário cadastrado com esta matrícula.";
         } else {
-            $mensagem = "Erro: " . $conexao->error;
+            $senha = password_hash($senhaDigitada, PASSWORD_DEFAULT);
+
+            $sql = "INSERT INTO usuario (nome, matricula, login, senha, tipo) 
+                    VALUES ('$nome', '$matricula', '$login', '$senha', '$tipo')";
+            if ($conexao->query($sql)) {
+                $mensagem = "Cadastro realizado com sucesso!";
+                $sucesso = true;
+            } else {
+                $mensagem = "Erro: " . $conexao->error;
+            }
         }
+        $check->close();
     }
 }
 ?>
