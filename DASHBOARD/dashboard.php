@@ -160,7 +160,9 @@ if ($resQtd) {
 <header>
             <h1>📄 Sistema Unificado da Assistência Estudantil</h1>
             <nav>
-                <a href="../LOGIN/cadastro.php">Cadastrar</a>
+                <?php if ($tipo == 1): // - Servidor AE ?>
+                    <a href="../LOGIN/cadastro.php">Cadastrar</a>
+                    <?php endif; ?>
                 <a href="dados.php" class="btn btn-info me-2">Meus Dados</a>
                 <a href="../LOGIN/logout.php">Sair</a>
             </nav>

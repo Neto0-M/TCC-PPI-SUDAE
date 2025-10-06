@@ -8,18 +8,46 @@ if (!isset($_SESSION['usuario'])) {
     exit;
 }
 
-// Captura os dados da sessão
-
-$matricula = $_SESSION['usuario']['matricula'] ;
-
-// Verifica se a sessão tem os campos essenciais
+$matricula = $_SESSION['usuario']['matricula'];
 
 
-$stmt = $conexao->prepare("SELECT nome, matricula, tipo FROM USUARIO WHERE matricula = ?");
+// Busca dados do usuário
+$stmt = $conexao->prepare("SELECT nome, matricula, email, tipo, curso, turma FROM USUARIO WHERE matricula = ?");
 $stmt->bind_param("s", $matricula);
 $stmt->execute();
 $result = $stmt->get_result();
 $usuario = $result->fetch_assoc();
+
+// Atualização de dados
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $nome = trim($_POST['nome']);
+    $email = trim($_POST['email']);
+    $curso = trim($_POST['curso']);
+    $turma = trim($_POST['turma']);
+    $novaSenha = $_POST['senha'];
+
+    if (!empty($novaSenha)) {
+        $stmt = $conexao->prepare("UPDATE USUARIO SET nome=?, email=?, curso=?, turma=?, senha=? WHERE matricula=?");
+        $stmt->bind_param("ssssss", $nome, $email, $curso, $turma, $novaSenha, $matricula);
+    } else {
+        $stmt = $conexao->prepare("UPDATE USUARIO SET nome=?, email=?, curso=?, turma=? WHERE matricula=?");
+        $stmt->bind_param("sssss", $nome, $email, $curso, $turma, $matricula);
+    }
+
+    if ($stmt->execute()) {
+        $msg = "Dados atualizados com sucesso!";
+        $_SESSION['usuario']['nome'] = $nome;
+        $_SESSION['usuario']['email'] = $email;
+    } else {
+        $msg = "Erro ao atualizar: " . $conexao->error;
+    }
+
+    // Atualiza os dados exibidos
+    $stmt = $conexao->prepare("SELECT nome, matricula, email, tipo, curso, turma FROM USUARIO WHERE matricula = ?");
+    $stmt->bind_param("s", $matricula);
+    $stmt->execute();
+    $usuario = $stmt->get_result()->fetch_assoc();
+}
 
 $qrcode = "https://quickchart.io/qr?text=" . urlencode($matricula);
 ?>
@@ -35,53 +63,96 @@ $qrcode = "https://quickchart.io/qr?text=" . urlencode($matricula);
     body {
       background-color: #e6f4ec;
       font-family: 'Segoe UI', sans-serif;
+      position: relative;
+      min-height: 100vh;
     }
+
+    /* Logo no canto superior esquerdo */
+    .logo {
+      position: absolute;
+      bottom: 20px;
+      left: 25px;
+      width: 90px;
+      height: auto;
+    }
+
     .perfil-container {
       min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
     }
+
     .perfil-box {
       background: #fff;
       padding: 2.5rem;
       border-radius: 12px;
       box-shadow: 0 0 15px rgba(0,0,0,0.1);
-      max-width: 500px;
+      max-width: 550px;
       width: 100%;
+      margin-top: 50px;
     }
+
     .perfil-box h2 {
       color: #198754;
       font-weight: bold;
-      margin-bottom: 1.5rem;
       text-align: center;
-    }
-    .perfil-info p {
-      font-size: 18px;
-      margin: 0.5rem 0;
+      margin-bottom: 1.5rem;
     }
   </style>
 </head>
 <body>
 
+<!-- Logo no canto -->
+<img src="../assets/img/SUDAE.svg" alt="Logo SUDAE" class="logo">
+
 <div class="perfil-container">
   <div class="perfil-box">
     <h2>Meu Perfil</h2>
-    <?php if ($usuario): ?>
-      <div class="perfil-info">
-        <p><strong>Nome:</strong> <?= htmlspecialchars($usuario['nome']) ?></p>
-        <p><strong>Matrícula:</strong> <?= htmlspecialchars($usuario['matricula']) ?></p>
-        <p><strong>Tipo de Usuário:</strong> <?= ucfirst($usuario['tipo']) ?></p>
-        <p><strong>QRCode da matrícula: </strong> </p>
-        <img src=<?= $qrcode?> >
-      </div>
-    <?php else: ?>
-      <div class="alert alert-danger">Usuário não encontrado.</div>
+
+    <?php if (isset($msg)): ?>
+      <div class="alert alert-info text-center"><?= htmlspecialchars($msg) ?></div>
     <?php endif; ?>
 
-    <div class="mt-4 d-flex justify-content-between">
-      <a href="dashboard.php" class="btn btn-success">Voltar ao Dashboard</a>
-    </div>
+    <form method="POST">
+      <div class="mb-3">
+        <label class="form-label">Nome</label>
+        <input type="text" name="nome" class="form-control" value="<?= htmlspecialchars($usuario['nome']) ?>" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($usuario['email']) ?>" required>
+      </div>
+
+      <?php if ($tipo == 3): ?>
+                    
+      <div class="mb-3">
+        <label class="form-label">Curso</label>
+        <input type="text" name="curso" class="form-control" value="<?= htmlspecialchars($usuario['curso'] ?? '') ?>">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Turma</label>
+        <input type="text" name="turma" class="form-control" value="<?= htmlspecialchars($usuario['turma'] ?? '') ?>">
+      </div>
+      <?php endif; ?>
+
+      <div class="mb-3">
+        <label class="form-label">Nova senha (opcional)</label>
+        <input type="password" name="senha" class="form-control" placeholder="Deixe em branco para manter a atual">
+      </div>
+
+      <div class="text-center mb-3">
+        <p><strong>QRCode da matrícula:</strong></p>
+        <img src="<?= $qrcode ?>" alt="QR Code da matrícula">
+      </div>
+
+      <div class="d-flex justify-content-between">
+        <a href="dashboard.php" class="btn btn-secondary">Voltar</a>
+        <button type="submit" class="btn btn-success">Salvar Alterações</button>
+      </div>
+    </form>
   </div>
 </div>
 
