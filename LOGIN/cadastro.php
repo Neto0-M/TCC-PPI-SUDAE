@@ -1,23 +1,43 @@
 <?php 
-include '../conexao.php';
+include '../conexao.php'; 
 
 $mensagem = '';
 $sucesso = false;
 
+// Função para validar senha (agora com somente a exigência de 8 caracteres)
+function validarSenha($senha) {
+    $erros = [];
+
+    if (strlen($senha) < 8) {
+        $erros[] = "A senha deve ter no mínimo 8 caracteres.";
+    }
+
+    return $erros;
+}
+
 if (isset($_POST['cadastrar'])) {
     $nome = $_POST['nome'];
     $matricula = $_POST['matricula'];
-    $senha = password_hash($_POST['senha'], PASSWORD_DEFAULT); // 🔑 corrigido
+    $senhaDigitada = $_POST['senha'];
     $tipo = $_POST['tipo'];
     $login = $matricula;
 
-    $sql = "INSERT INTO usuario (nome, matricula, login, senha, tipo) 
-            VALUES ('$nome', '$matricula', '$login', '$senha', '$tipo')";
-    if ($conexao->query($sql)) {
-        $mensagem = "Cadastro realizado com sucesso!";
-        $sucesso = true;
+    // Validação antes de salvar
+    $errosSenha = validarSenha($senhaDigitada);
+
+    if (!empty($errosSenha)) {
+        $mensagem = implode("<br>", $errosSenha);
     } else {
-        $mensagem = "Erro: " . $conexao->error;
+        $senha = password_hash($senhaDigitada, PASSWORD_DEFAULT);
+
+        $sql = "INSERT INTO usuario (nome, matricula, login, senha, tipo) 
+                VALUES ('$nome', '$matricula', '$login', '$senha', '$tipo')";
+        if ($conexao->query($sql)) {
+            $mensagem = "Cadastro realizado com sucesso!";
+            $sucesso = true;
+        } else {
+            $mensagem = "Erro: " . $conexao->error;
+        }
     }
 }
 ?>
@@ -89,16 +109,20 @@ if (isset($_POST['cadastrar'])) {
     <?php if (!$sucesso): ?>
       <form method="POST">
         <div class="mb-3">
-          <label for="nome" class="form-label">Nome</label>
+          <label for="nome" class="form-label">Nome Completo</label>
           <input type="text" name="nome" class="form-control" required>
         </div>
         <div class="mb-3">
           <label for="matricula" class="form-label">Matricula</label>
-          <input type="matricula" name="matricula" class="form-control" required>
+          <input type="text" name="matricula" class="form-control" required
+                 pattern=".{10,}"
+                 title="A matrícula deve ter no mínimo 10 caracteres.">
         </div>
         <div class="mb-3">
           <label for="senha" class="form-label">Senha</label>
-          <input type="password" name="senha" class="form-control" required>
+          <input type="password" name="senha" class="form-control" required
+                 pattern=".{8,}"
+                 title="A senha deve ter no mínimo 8 caracteres.">
         </div>
         <div class="mb-3">
           <label for="tipo" class="form-label">Tipo de Usuário</label>
@@ -125,7 +149,6 @@ if (isset($_POST['cadastrar'])) {
     </div>
   </div>
 </div>
-
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>

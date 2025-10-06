@@ -126,7 +126,9 @@ if (isset($_POST['login'])) {
 
         <div class="mb-3">
           <label for="senha" class="form-label">Senha</label>
-          <input type="password" name="senha" class="form-control" required>
+          <input type="password" name="senha" class="form-control" required
+            pattern=".{8,}"
+            title="A senha deve ter no mínimo 8 caracteres.">
         </div>
 
         <div class="d-grid mb-3">
@@ -142,9 +144,6 @@ if (isset($_POST['login'])) {
     <?php endif; ?>
   </div>
 </div>
-
-
-
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>

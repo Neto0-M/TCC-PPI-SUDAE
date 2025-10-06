@@ -1,4 +1,3 @@
-```php
 <?php 
 include '../conexao.php'; 
 
@@ -93,7 +92,9 @@ if (isset($_POST['redefinir'])) {
       <form method="POST">
         <div class="mb-3">
           <label for="nova_senha" class="form-label">Nova senha</label>
-          <input type="password" class="form-control" name="nova_senha" id="nova_senha" required>
+          <input type="password" class="form-control" name="nova_senha" id="nova_senha" required
+                 pattern=".{8,}" 
+                 title="A senha deve ter no mínimo 8 caracteres.">
         </div>
         <input type="hidden" name="matricula" value="<?= htmlspecialchars($matricula) ?>">
         <button type="submit" name="redefinir" class="btn btn-success w-100">Redefinir Senha</button>
@@ -111,4 +112,3 @@ if (isset($_POST['redefinir'])) {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-```
