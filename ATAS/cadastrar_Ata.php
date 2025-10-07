@@ -8,7 +8,7 @@ if (!isset($_SESSION['usuario'])) {
     exit;
 }
 
-$idRedator = $_SESSION['usuario']['idUSUARIO']; // redator = usuário logado
+$idRedator = $_SESSION['usuario']['idUSUARIO']; // redator é o usuário logado
 
 // ====== Cadastrar nova ATA ======
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['acao'] === 'cadastrar') {
@@ -16,45 +16,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['ac
     $assunto = $_POST['assunto'];
     $anotacoes = $_POST['anotacoes'];
     $encaminhamentos = $_POST['encaminhamentos'];
-    $participantes = $_POST['participantes'] ?? []; // array de IDs de usuários
+    $idRedator = $_SESSION['usuario']['idUSUARIO']; // redator é o usuário logado
+    $participantes = isset($_POST['participantes']) ? $_POST['participantes'] : [];
 
-    // 1) Inserir na tabela ATA
+    // 1️⃣ Cria a ATA
     $sql = "INSERT INTO ATA (data, assunto, anotacoes, encaminhamentos, idRedator) 
             VALUES (?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ssssi", $data, $assunto, $anotacoes, $encaminhamentos, $idRedator);
 
     if ($stmt->execute()) {
-        $idAta = $stmt->insert_id; // pega o ID da ATA inserida
+        $idAta = $stmt->insert_id; // pega o ID da ATA criada
 
-        // 2) Inserir os participantes selecionados
-        $sql_part = "INSERT INTO PARTICIPANTES (idAta, idUSUARIO, dataRegistro, assinatura) 
-                     VALUES (?, ?, NOW(), 'N')";
-        $stmt_part = $conn->prepare($sql_part);
+        // 2️⃣ Insere os participantes (se houver)
+        if (!empty($participantes)) {
+            $sql_part = "INSERT INTO PARTICIPANTES (idAta, idUSUARIO, dataRegistro, assinatura) 
+                         VALUES (?, ?, NOW(), 'N')";
+            $stmt_part = $conn->prepare($sql_part);
 
-        foreach ($participantes as $idUsuario) {
-            $stmt_part->bind_param("ii", $idAta, $idUsuario);
-            $stmt_part->execute();
+            foreach ($participantes as $idUsuario) {
+                // Garante que o valor é numérico e não vazio
+                if (!empty($idUsuario) && is_numeric($idUsuario)) {
+                    $stmt_part->bind_param("ii", $idAta, $idUsuario);
+                    $stmt_part->execute();
+                }
+            }
+
+            echo "<p>ATA cadastrada com sucesso com " . count($participantes) . " participante(s)!</p>";
+        } else {
+            echo "<p>ATA cadastrada, mas sem participantes vinculados.</p>";
         }
-
-        echo "<p>ATA cadastrada com sucesso!</p>";
     } else {
-        echo "<p>Erro ao cadastrar: " . $stmt->error . "</p>";
+        echo "<p>Erro ao cadastrar ATA: " . $stmt->error . "</p>";
     }
 }
 
-// ====== Excluir ======
+
+// ====== Excluir ATA ======
 if (isset($_GET['delete'])) {
     $idATA = $_GET['delete'];
-
-    // exclui automaticamente da tabela PARTICIPANTES (por causa do ON DELETE CASCADE)
     $sql = "DELETE FROM ATA WHERE idATA=?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $idATA);
     $stmt->execute();
 }
 
-// ====== Listar todas ======
+// ====== Listar ATAs ======
 $sql_listar = "SELECT A.idATA, A.data, A.assunto, U.nome AS redator,
                       GROUP_CONCAT(PU.nome SEPARATOR ', ') AS participantes
                FROM ATA A
@@ -93,20 +100,41 @@ if (!$result) {
 
     <label>Encaminhamentos:</label>
     <textarea name="encaminhamentos"></textarea><br><br>
-<label>Participantes:</label><br>
-<select name="participantes[]" multiple required>
-    <?php
-    $usuarios = $conn->query("SELECT idUSUARIO, nome, tipo FROM USUARIO WHERE tipo IN (2,3)"); // só professores e alunos
-    while ($u = $usuarios->fetch_assoc()) {
-        $tipo = ($u['tipo'] == 2) ? "Professor" : "Aluno";
-        echo "<option value='{$u['idUSUARIO']}'>{$u['nome']} ({$tipo})</option>";
-    }
-    ?>
-</select>
-<br>
+
+    <!-- Número máximo de participantes -->
+    <label>Número de Participantes:</label>
+    <input type="number" id="numParticipantes" min="1" max="50" value="1" required><br><br>
+
+    <!-- Seleção múltipla (somente tipo 2 e 3) -->
+    <label>Participantes:</label><br>
+    <select name="participantes[]" id="selectParticipantes" multiple required>
+        <?php
+        $usuarios = $conn->query("SELECT idUSUARIO, nome, tipo FROM USUARIO WHERE tipo IN (2,3)");
+        while ($u = $usuarios->fetch_assoc()) {
+            $tipo = ($u['tipo'] == 2) ? "Professor" : "Aluno";
+            echo "<option value='{$u['idUSUARIO']}'>{$u['nome']} ({$tipo})</option>";
+        }
+        ?>
+    </select>
+    <br><small>Segure CTRL (ou CMD no Mac) para selecionar vários</small><br><br>
 
     <button type="submit">Salvar</button>
 </form>
+
+<script>
+    // 🔧 Limite de participantes conforme campo numérico
+    const numInput = document.getElementById("numParticipantes");
+    const selectBox = document.getElementById("selectParticipantes");
+
+    selectBox.addEventListener("change", function () {
+        const max = parseInt(numInput.value);
+        const selected = Array.from(this.selectedOptions);
+        if (selected.length > max) {
+            alert("Você só pode selecionar até " + max + " participantes.");
+            selected[selected.length - 1].selected = false;
+        }
+    });
+</script>
 
 <a href="../DASHBOARD/dashboard.php">Voltar</a>
 
@@ -131,7 +159,8 @@ if (!$result) {
                 <td><?php echo $ata['redator']; ?></td>
                 <td><?php echo $ata['participantes'] ?: 'Nenhum'; ?></td>
                 <td>
-                    <a href="?delete=<?php echo $ata['idATA']; ?>" onclick="return confirm('Deseja excluir esta ATA?')">Excluir</a>
+                    <a href="?delete=<?php echo $ata['idATA']; ?>"
+                       onclick="return confirm('Deseja excluir esta ATA?')">Excluir</a>
                 </td>
             </tr>
         <?php endwhile; ?>
