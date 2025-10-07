@@ -10,13 +10,14 @@ if (!isset($_SESSION['usuario'])) {
 
 $matricula = $_SESSION['usuario']['matricula'];
 
-
 // Busca dados do usuário
 $stmt = $conexao->prepare("SELECT nome, matricula, email, tipo, curso, turma FROM USUARIO WHERE matricula = ?");
 $stmt->bind_param("s", $matricula);
 $stmt->execute();
 $result = $stmt->get_result();
 $usuario = $result->fetch_assoc();
+
+$tipo = $usuario['tipo']; 
 
 // Atualização de dados
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -141,6 +142,11 @@ $qrcode = "https://quickchart.io/qr?text=" . urlencode($matricula);
       <div class="mb-3">
         <label class="form-label">Nova senha (opcional)</label>
         <input type="password" name="senha" class="form-control" placeholder="Deixe em branco para manter a atual">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Tipo de Usuário:</label>
+        <input type="text" class="form-control" value="<?= ($usuario['tipo'] == 1) ? 'Servidor AE' : (($usuario['tipo'] == 2) ? 'Professor' : 'Aluno') ?>" disabled>
       </div>
 
       <div class="text-center mb-3">

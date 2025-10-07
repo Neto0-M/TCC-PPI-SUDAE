@@ -1,5 +1,5 @@
 <?php
-include 'conexao.php'; // conexão com banco SUDAE
+include '../conexao.php'; // conexão com banco SUDAE
 
 // === FUNÇÃO PARA FORMATAR DATA ===
 function data_br($data) {
