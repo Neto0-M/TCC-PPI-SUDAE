@@ -68,17 +68,34 @@ $qrcode = "https://quickchart.io/qr?text=" . urlencode($matricula);
       min-height: 100vh;
     }
 
-    /* Logo no canto superior esquerdo */
     .logo {
       position: absolute;
-      bottom: 20px;
       left: 25px;
-      width: 90px;
+      width: 50px;
       height: auto;
     }
 
+    header {
+      background-color: #fff;
+      padding: 15px 40px;
+      border-bottom: 2px solid #dceee2;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      position: relative;
+    }
+
+    header h1 {
+      position: absolute;
+      left: 140px;
+      font-size: 1.2rem;
+      color: #198754;
+      font-weight: bold;
+      margin: 0;
+    }
+
     .perfil-container {
-      min-height: 100vh;
+      min-height: 10vh;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -100,12 +117,30 @@ $qrcode = "https://quickchart.io/qr?text=" . urlencode($matricula);
       text-align: center;
       margin-bottom: 1.5rem;
     }
+
+    footer {
+      position: absolute;
+      bottom: 2px;
+      width: 100%;
+      text-align: center;
+      color: #666;
+      font-size: 0.9rem;
+      padding-bottom: 5px;
+    }
   </style>
 </head>
 <body>
 
-<!-- Logo no canto -->
-<img src="../assets/img/SUDAE.svg" alt="Logo SUDAE" class="logo">
+<header>
+  <img src="../assets/img/SUDAE.svg" alt="Logo SUDAE" class="logo">
+  <h1>Sistema Unificado da Assistência Estudantil</h1>
+  <nav>
+    <?php if ($tipo == 1): ?>
+      <a href="../LOGIN/cadastro.php" class="btn btn-outline-success btn-sm">Cadastrar</a>
+    <?php endif; ?>
+    <a href="../LOGIN/logout.php" class="btn btn-danger btn-sm">Sair</a>
+  </nav>
+</header>
 
 <div class="perfil-container">
   <div class="perfil-box">
@@ -161,6 +196,10 @@ $qrcode = "https://quickchart.io/qr?text=" . urlencode($matricula);
     </form>
   </div>
 </div>
+
+<footer>
+  <p>© <?= date('Y') ?> SUDAE - Sistema Unificado da Assistência Estudantil</p>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>

@@ -2,39 +2,31 @@
 session_start();
 require_once '../conexao.php';
 
-// Verifica se o usuário está logado
+// Verifica login
 if (!isset($_SESSION['usuario'])) {
     header('Location: ../LOGIN/login.php');
     exit;
 }
 
-// Captura os dados da sessão
 $usuario = $_SESSION['usuario'];
-
-// Verifica se a sessão tem os campos essenciais
 if (!isset($usuario['idUSUARIO'], $usuario['tipo'])) {
     die('Sessão inválida. Faça login novamente.');
 }
 
-$tipo = $usuario['tipo']; // 1 = Servidor AE, 2 = Professor, 3 = Aluno
+$tipo = $usuario['tipo'];
 $idUsuario = $usuario['idUSUARIO'];
 
-// Calcula o total de atrasos conforme o tipo de usuário
+/* ------------------ CONTAGEM DE ATRASOS ------------------ */
 $qtdAtrasos = 0;
+
 if ($tipo == 3) {
-    // Aluno: conta apenas seus próprios atrasos
     $sqlAtrasos = "SELECT COUNT(*) AS total FROM ATRASO WHERE idAluno = ?";
     $stmtAtrasos = $conexao->prepare($sqlAtrasos);
     $stmtAtrasos->bind_param("i", $idUsuario);
     $stmtAtrasos->execute();
-    $resAtrasos = $stmtAtrasos->get_result();
-    if ($resAtrasos) {
-        $rowAtrasos = $resAtrasos->fetch_assoc();
-        $qtdAtrasos = (int)$rowAtrasos['total'];
-    }
+    $rowAtrasos = $stmtAtrasos->get_result()->fetch_assoc();
+    $qtdAtrasos = (int)$rowAtrasos['total'];
 } elseif ($tipo == 2) {
-    // Professor: conta atrasos dos alunos da(s) turma(s) do professor
-    // Supondo que professor vê atrasos dos alunos da mesma turma
     $turma = $usuario['turma'] ?? null;
     if ($turma) {
         $sqlAtrasos = "
@@ -46,188 +38,245 @@ if ($tipo == 3) {
         $stmtAtrasos = $conexao->prepare($sqlAtrasos);
         $stmtAtrasos->bind_param("s", $turma);
         $stmtAtrasos->execute();
-        $resAtrasos = $stmtAtrasos->get_result();
-        if ($resAtrasos) {
-            $rowAtrasos = $resAtrasos->fetch_assoc();
-            $qtdAtrasos = (int)$rowAtrasos['total'];
-        }
-    }
-} else {
-    // Servidor AE: conta todos os atrasos
-    $sqlAtrasos = "SELECT COUNT(*) AS total FROM ATRASO";
-    $resAtrasos = $conexao->query($sqlAtrasos);
-    if ($resAtrasos) {
-        $rowAtrasos = $resAtrasos->fetch_assoc();
+        $rowAtrasos = $stmtAtrasos->get_result()->fetch_assoc();
         $qtdAtrasos = (int)$rowAtrasos['total'];
     }
+} else {
+    $rowAtrasos = $conexao->query("SELECT COUNT(*) AS total FROM ATRASO")->fetch_assoc();
+    $qtdAtrasos = (int)$rowAtrasos['total'];
 }
 
-// Dashboard conforme o tipo de usuário
+/* ------------------ ATAS ------------------ */
 if ($tipo == 3 || $tipo == 2) {
-    // Atas redigidas pelo aluno ou professor (idRedator)
     $sqlAtas = "
-        SELECT 
-            a.idATA,
-            a.assunto,
-            a.`data`,
-            a.anotacoes,
-            GROUP_CONCAT(u.nome ORDER BY u.nome SEPARATOR ', ') AS participantes,
-            COUNT(u.idUSUARIO) AS qtd_participantes
+        SELECT a.idATA, a.assunto, a.`data`, a.anotacoes,
+               GROUP_CONCAT(u.nome ORDER BY u.nome SEPARATOR ', ') AS participantes,
+               COUNT(u.idUSUARIO) AS qtd_participantes
         FROM ATA a
         LEFT JOIN PARTICIPANTES p ON a.idATA = p.idAta
         LEFT JOIN USUARIO u ON p.idUSUARIO = u.idUSUARIO
         WHERE a.idRedator = ?
-        GROUP BY a.idATA, a.assunto, a.`data`, a.anotacoes
+        GROUP BY a.idATA
         ORDER BY a.`data` DESC
     ";
-
-    $sqlQtdAtas = "SELECT COUNT(*) AS total FROM ATA WHERE idRedator = ?";
-
     $stmtAtas = $conexao->prepare($sqlAtas);
     $stmtAtas->bind_param("i", $idUsuario);
     $stmtAtas->execute();
     $resAtas = $stmtAtas->get_result();
 
-    $stmtQtd = $conexao->prepare($sqlQtdAtas);
+    $stmtQtd = $conexao->prepare("SELECT COUNT(*) AS total FROM ATA WHERE idRedator = ?");
     $stmtQtd->bind_param("i", $idUsuario);
     $stmtQtd->execute();
     $resQtd = $stmtQtd->get_result();
 } else {
-    // Servidor AE  todas as atas
-    $sqlAtas = "
-        SELECT 
-            a.idATA,
-            a.assunto,
-            a.`data`,
-            a.anotacoes,
-            GROUP_CONCAT(u.nome SEPARATOR ', ') AS participantes,
-            COUNT(u.idUSUARIO) AS qtd_participantes
+    $resAtas = $conexao->query("
+        SELECT a.idATA, a.assunto, a.`data`, a.anotacoes,
+               GROUP_CONCAT(u.nome SEPARATOR ', ') AS participantes,
+               COUNT(u.idUSUARIO) AS qtd_participantes
         FROM ATA a
         LEFT JOIN PARTICIPANTES p ON a.idATA = p.idAta
         LEFT JOIN USUARIO u ON p.idUSUARIO = u.idUSUARIO
-        GROUP BY a.idATA, a.assunto, a.`data`, a.anotacoes
+        GROUP BY a.idATA
         ORDER BY a.`data` DESC
-    ";
-    // Contagem de todas as atas
-    $sqlQtdAtas = "SELECT COUNT(*) AS total FROM ATA";
-
-    $resAtas = $conexao->query($sqlAtas);
-    $resQtd = $conexao->query($sqlQtdAtas);
+    ");
+    $resQtd = $conexao->query("SELECT COUNT(*) AS total FROM ATA");
 }
+$qtdAtas = $resQtd->fetch_assoc()['total'] ?? 0;
 
-if (!$resAtas) {
-    die("Erro na consulta de atas: " . $conexao->error);
-}
-
-// Executa a contagem de atas
-$qtdAtas = 0;
-if ($resQtd) {
-    $row = $resQtd->fetch_assoc();
-    $qtdAtas = (int)$row['total'];
-} else {
-    die("Erro na contagem de atas: " . $conexao->error);
-}
+/* ------------------ ATRASOS RECENTES (últimos 30 dias) ------------------ */
+$sqlAtrasosRecentes = "
+    SELECT a.idATRASO, u.nome AS aluno, a.data, a.motivo
+    FROM ATRASO a
+    INNER JOIN USUARIO u ON a.idAluno = u.idUSUARIO
+    WHERE a.data >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+    ORDER BY a.data DESC
+";
+$resAtrasosRecentes = $conexao->query($sqlAtrasosRecentes);
 ?>
 
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <title>Dashboard</title>
-    <style>
-        body { font-family: Arial, sans-serif; background-color: #fafafa; margin:0; padding:0; color:#333; }
-        header { background:#fff; border-bottom:1px solid #ddd; padding:15px 30px; display:flex; justify-content:space-between; align-items:center; }
-        header h1 { font-size:16px; margin:0; }
-        nav a { margin-left:20px; text-decoration:none; color:#333; font-weight:bold; }
-        .container { padding:30px; }
-        .beneficios { background:#f5f9ff; padding:20px; border-radius:10px; margin-bottom:30px; display:grid; grid-template-columns:1fr 1fr; gap:20px; }
-        .beneficios h2 { grid-column:1 / span 2; margin-bottom:10px; }
-        .stats { display: flex; gap: 20px; margin-bottom: 30px; }
-        .card { flex: 1; background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 20px; text-align: center; }
-        .beneficios div h3 { margin:0 0 5px; }
-        .stats { display:flex; gap:20px; margin-bottom:30px; }
-        .card { flex:1; background:#fff; border:1px solid #eee; border-radius:10px; padding:20px; text-align:center; }
-        .card h3 { margin:0 0 10px; font-size:18px; }
-        .card p { margin:0; font-size:14px; color:#555; }
-        .atas { margin-top:20px; }
-        .ata { background:#fff; border:1px solid #eee; border-radius:10px; padding:20px; margin-bottom:15px; }
-        .ata h3 { margin:0 0 5px; font-size:16px; }
-        .ata p { margin:5px 0; font-size:14px; }
-        .ata small { display:block; margin-top:10px; font-size:12px; color:#555; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Dashboard - SUDAE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #e6f4ec;
+      font-family: 'Segoe UI', sans-serif;
+      position: relative;
+      min-height: 100vh;
+    }
+
+    .logo {
+      position: absolute;
+      left: 25px;
+      width: 50px;
+      height: auto;
+    }
+
+    header {
+      background-color: #fff;
+      padding: 15px 40px;
+      border-bottom: 2px solid #dceee2;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      position: relative;
+    }
+
+    header h1 {
+      position: absolute;
+      left: 140px;
+      font-size: 1.2rem;
+      color: #198754;
+      font-weight: bold;
+      margin: 0;
+    }
+
+    .container {
+      margin-top: 10px;
+    }
+
+    .card {
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    .ata, .atraso {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 15px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.05);
+    }
+
+    .ata h5, .atraso h5 {
+      color: #198754;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .botao-grande-gap {
+    gap: 22rem !important;
+  }
+
+    footer {
+      position: absolute;
+      bottom: 2px;
+      width: 100%;
+      text-align: center;
+      color: #666;
+      font-size: 0.9rem;
+      padding-bottom: 5px;
+    }
+  </style>
 </head>
+
 <body>
 <header>
-            <h1>📄 Sistema Unificado da Assistência Estudantil</h1>
-            <nav>
-                <?php if ($tipo == 1): // - Servidor AE ?>
-                    <a href="../LOGIN/cadastro.php">Cadastrar</a>
-                    <?php endif; ?>
-                <a href="dados.php" class="btn btn-info me-2">Meus Dados</a>
-                <a href="../LOGIN/logout.php">Sair</a>
-            </nav>
-        </header>
-<div class="container">
-    <h2>Bem-vindo, <?= htmlspecialchars($usuario['nome']); ?>!</h2>
-    <?php if ($tipo == 1): // - Servidor AE ?>
-        <h3>Painel do Servidor AE</h3>
-        <p>Aqui você pode gerenciar atrasos, atas e relatórios.</p>
-
-    <?php elseif ($tipo == 2): // - Professor?>
-        <h3>Painel do Professor</h3>
-        <p>Aqui você pode registrar presença e consultar atrasos dos alunos.</p>
-
-    <?php elseif ($tipo == 3): // - Aluno?>
-        <h3>Painel do Aluno</h3>
-        <p>Aqui você pode ver seus atrasos e atas.</p>
+  <img src="../assets/img/SUDAE.svg" alt="Logo SUDAE" class="logo">
+  <h1>Sistema Unificado da Assistência Estudantil</h1>
+  <nav>
+    <?php if ($tipo == 1): ?>
+      <a href="../LOGIN/cadastro.php" class="btn btn-outline-success btn-sm">Cadastrar</a>
     <?php endif; ?>
+    <a href="dados.php" class="btn btn-outline-secondary btn-sm">Meus Dados</a>
+    <a href="../LOGIN/logout.php" class="btn btn-danger btn-sm">Sair</a>
+  </nav>
+</header>
 
-    <section class="stats">
-        <div class="card">
-            <h3>Total de ATAs</h3>
-            <p><?= $qtdAtas ?></p>
-        </div>
-        <div class="card">
-            <h3>Total de atrasos</h3>
-            <p><?= $qtdAtrasos ?></p>
-        </div>
-    </section>
+<div class="container">
+  <div class="text-center mb-4">
+    <h2 class="fw-bold text-success">Bem-vindo, <?= htmlspecialchars($usuario['nome']); ?>!</h2>
+    <?php if ($tipo == 1): ?>
+      <p class="text-muted">Painel do Servidor AE — Gerencie atrasos, atas e relatórios.</p>
+    <?php elseif ($tipo == 2): ?>
+      <p class="text-muted">Painel do Professor — Visualize atas e consulte atrasos.</p>
+    <?php else: ?>
+      <p class="text-muted">Painel do Aluno — Visualize seus atrasos e atas.</p>
+    <?php endif; ?>
+  </div>
 
-    <?php if ($tipo == 1): // - Servidor AE ?>
-        <section class="funções">
-        <a href="../ATAS/cadastrar_Ata.php">
-            <button type="button">
-            <h3>Registrar Ata</h3>
-            </button>
-        </a>
+  <!-- Cards superiores -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <div class="card text-center p-3">
+        <h5>Total de ATAs</h5>
+        <p class="display-6 fw-bold text-success"><?= $qtdAtas ?></p>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card text-center p-3">
+        <h5>Total de Atrasos</h5>
+        <p class="display-6 fw-bold text-danger"><?= $qtdAtrasos ?></p>
+      </div>
+    </div>
+  </div>
 
-        <a href="../ATRASOS/atrasos.php">
-            <button type="button">
-            <h3>Registrar Atraso</h3>
-            </button>
-        </a>
-        </section>
-        <?php endif; ?>
+  <!-- Botões lado a lado -->
+  <?php if ($tipo == 1): ?>
+  <div class="d-flex justify-content-center mb-5 flex-wrap botao-grande-gap">
+    <a href="../ATAS/cadastrar_Ata.php" class="btn btn-success btn-lg px-4">
+      📋 Registrar ATA
+    </a>
+    <a href="../ATRASOS/atrasos.php" class="btn btn-warning btn-lg px-4 text-white">
+      ⏰ Registrar Atraso
+    </a>
+  </div>
+  <?php endif; ?>
 
-    <section class="atas">
-        <h2>ATAs Recentes</h2>
+  <!-- Seções lado a lado -->
+  <div class="row g-4">
+    <!-- ATAs Recentes -->
+    <div class="col-md-6">
+      <section class="atas">
+        <h4 class="fw-bold text-success mb-3">ATAs Recentes</h4>
         <?php if ($resAtas && $resAtas->num_rows > 0): ?>
-            <?php while ($ata = $resAtas->fetch_assoc()): ?>
-                <?php $data = date('d/m/Y H:i', strtotime($ata['data'])); ?>
-                <div class="ata">
-                    <h3><?= htmlspecialchars($ata['assunto']) ?></h3>
-                    <p><?= nl2br(htmlspecialchars($ata['anotacoes'])) ?></p>
-                    <small>
-                        📅 <?= $data ?> &nbsp;
-                        👥 <?= $ata['qtd_participantes'] ?> participantes<br>
-                        Participantes: <?= htmlspecialchars($ata['participantes']) ?>
-                    </small>
-                </div>
-            <?php endwhile; ?>
+          <?php while ($ata = $resAtas->fetch_assoc()): ?>
+            <div class="ata mb-3">
+              <h5><?= htmlspecialchars($ata['assunto']) ?></h5>
+              <p><?= nl2br(htmlspecialchars($ata['anotacoes'])) ?></p>
+              <small class="text-muted">
+                📅 <?= date('d/m/Y H:i', strtotime($ata['data'])) ?><br>
+                👥 <?= $ata['qtd_participantes'] ?> participantes<br>
+                <em>Participantes:</em> <?= htmlspecialchars($ata['participantes']) ?>
+              </small>
+            </div>
+          <?php endwhile; ?>
         <?php else: ?>
-            <p>Nenhuma ATA registrada ainda.</p>
+          <div class="alert alert-info text-center">Nenhuma ATA registrada ainda.</div>
         <?php endif; ?>
-    </section>
+      </section>
+    </div>
+
+    <!-- Atrasos Recentes -->
+    <div class="col-md-6">
+      <section class="atrasos">
+        <h4 class="fw-bold text-success mb-3">Atrasos Recentes (últimos 30 dias)</h4>
+        <?php if ($resAtrasosRecentes && $resAtrasosRecentes->num_rows > 0): ?>
+          <?php while ($a = $resAtrasosRecentes->fetch_assoc()): ?>
+            <div class="atraso mb-3">
+              <h5><?= htmlspecialchars($a['aluno']) ?></h5>
+              <p class="mb-1"><strong>Data:</strong> <?= date('d/m/Y', strtotime($a['data'])) ?></p>
+              <p><strong>Motivo:</strong> <?= htmlspecialchars($a['motivo'] ?? '—') ?></p>
+            </div>
+          <?php endwhile; ?>
+        <?php else: ?>
+          <div class="alert alert-info text-center">Nenhum atraso registrado nos últimos 30 dias.</div>
+        <?php endif; ?>
+      </section>
+    </div>
+  </div>
 </div>
+
+
+<footer>
+  <p>© <?= date('Y') ?> SUDAE - Sistema Unificado da Assistência Estudantil</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

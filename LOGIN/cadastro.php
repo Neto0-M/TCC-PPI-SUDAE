@@ -4,7 +4,7 @@ include '../conexao.php';
 $mensagem = '';
 $sucesso = false;
 
-// 🔒 Função para validar senha (agora com somente a exigência de 8 caracteres)
+// Função para validar senha (agora com somente a exigência de 8 caracteres)
 function validarSenha($senha) {
     $erros = [];
 
@@ -28,7 +28,7 @@ if (isset($_POST['cadastrar'])) {
     if (!empty($errosSenha)) {
         $mensagem = implode("<br>", $errosSenha);
     } else {
-        // 🔎 Verificar se já existe a matrícula
+        // Verificar se já existe a matrícula
         $check = $conexao->prepare("SELECT matricula FROM usuario WHERE matricula = ?");
         $check->bind_param("s", $matricula);
         $check->execute();
@@ -66,8 +66,31 @@ if (isset($_POST['cadastrar'])) {
       background-color: #e6f4ec;
       font-family: 'Segoe UI', sans-serif;
     }
+    .logo {
+      position: absolute;
+      left: 25px;
+      width: 50px;
+      height: auto;
+    }
+    header {
+      background-color: #fff;
+      padding: 15px 40px;
+      border-bottom: 2px solid #dceee2;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      position: relative;
+    }
+    header h1 {
+      position: absolute;
+      left: 140px;
+      font-size: 1.2rem;
+      color: #198754;
+      font-weight: bold;
+      margin: 0;
+    }
     .cadastro-container {
-      min-height: 100vh;
+      min-height: 90vh;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -103,9 +126,28 @@ if (isset($_POST['cadastrar'])) {
     .cadastro-links a:hover {
       text-decoration: underline;
     }
+
+    footer {
+      position: absolute;
+      bottom: 2px;
+      width: 100%;
+      text-align: center;
+      color: #666;
+      font-size: 0.9rem;
+      padding-bottom: 5px;
+    }
   </style>
 </head>
 <body>
+
+<header>
+  <img src="../assets/img/SUDAE.svg" alt="Logo SUDAE" class="logo">
+  <h1>Sistema Unificado da Assistência Estudantil</h1>
+  <nav>
+    <a href="../DASHBOARD/dados.php" class="btn btn-outline-secondary btn-sm">Meus Dados</a>
+    <a href="../LOGIN/logout.php" class="btn btn-danger btn-sm">Sair</a>
+  </nav>
+</header>
 
 <div class="cadastro-container">
   <div class="cadastro-box">
@@ -160,6 +202,10 @@ if (isset($_POST['cadastrar'])) {
     </div>
   </div>
 </div>
+
+<footer>
+  <p>© <?= date('Y') ?> SUDAE - Sistema Unificado da Assistência Estudantil</p>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>

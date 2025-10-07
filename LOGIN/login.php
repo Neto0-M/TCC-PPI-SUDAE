@@ -58,8 +58,10 @@ if (isset($_POST['login'])) {
     .login-container {
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      position: relative;
     }
 
     .login-box {
@@ -99,6 +101,22 @@ if (isset($_POST['login'])) {
     .login-links a:hover {
       text-decoration: underline;
     }
+
+    .logo {
+      width: 100px;
+      height: auto;
+      margin-bottom: 1rem;
+    }
+
+    footer {
+      position: absolute;
+      bottom: 2px;
+      width: 100%;
+      text-align: center;
+      color: #666;
+      font-size: 0.9rem;
+      padding-bottom: 5px;
+    }
   </style>
 </head>
 <body>
@@ -120,22 +138,23 @@ if (isset($_POST['login'])) {
     <?php else: ?>
       <form method="POST">
         <div class="mb-3">
-          <label for="matricula" class="form-label">Matricula</label>
+          <label for="matricula" class="form-label">Matrícula</label>
           <input type="text" name="matricula" class="form-control" required>
         </div>
 
         <div class="mb-3">
           <label for="senha" class="form-label">Senha</label>
           <input type="password" name="senha" class="form-control" required
-            pattern=".{8,}"
-            title="A senha deve ter no mínimo 8 caracteres.">
+                 pattern=".{8,}"
+                 title="A senha deve ter no mínimo 8 caracteres.">
         </div>
 
         <div class="d-grid mb-3">
           <button type="submit" name="login" class="btn btn-login text-white">Entrar</button>
         </div>
       </form>
-        <div class="login-links text-center">
+
+      <div class="login-links text-center">
         <span class="text-muted d-block mb-2">
           Para criar uma conta, procure a <strong>Assistência Estudantil</strong>.
         </span>
@@ -143,7 +162,15 @@ if (isset($_POST['login'])) {
       </div>
     <?php endif; ?>
   </div>
+
+  <img src="../assets/img/SUDAE.svg" alt="Logo SUDAE" class="logo">
+
+  <footer>
+  <p>© <?= date('Y') ?> SUDAE - Sistema Unificado da Assistência Estudantil</p>
+</footer>
 </div>
+
+
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
