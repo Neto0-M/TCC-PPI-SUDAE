@@ -9,9 +9,6 @@ if (!isset($_SESSION['usuario'])) {
 }
 
 $usuario = $_SESSION['usuario'];
-if (!isset($usuario['idUSUARIO'], $usuario['tipo'])) {
-    die('Sessão inválida. Faça login novamente.');
-}
 
 $tipo = $usuario['tipo'];
 $idUsuario = $usuario['idUSUARIO'];
@@ -160,7 +157,12 @@ $resAtrasosRecentes = $conexao->query($sqlAtrasosRecentes);
     }
 
     .botao-grande-gap {
-    gap: 22rem !important;
+    gap: 27rem !important;
+  }
+
+  .img-btn {
+    width: 24px; 
+    padding-bottom: 3px;
   }
 
     footer {
@@ -219,11 +221,14 @@ $resAtrasosRecentes = $conexao->query($sqlAtrasosRecentes);
   <!-- Botões lado a lado -->
   <?php if ($tipo == 1): ?>
   <div class="d-flex justify-content-center mb-5 flex-wrap botao-grande-gap">
+    
     <a href="../ATAS/cadastrar_Ata.php" class="btn btn-success btn-lg px-4">
-      📋 Registrar ATA
+      <img src="../assets/img/ata.svg" alt="imagem ata" class=" img-btn">
+      Registrar ATA
     </a>
     <a href="../ATRASOS/atrasos.php" class="btn btn-warning btn-lg px-4 text-white">
-      ⏰ Registrar Atraso
+      <img src="../assets/img/atraso.svg" alt="imagem ata" class=" img-btn">
+      Registrar Atraso
     </a>
   </div>
   <?php endif; ?>
@@ -240,8 +245,10 @@ $resAtrasosRecentes = $conexao->query($sqlAtrasosRecentes);
               <h5><?= htmlspecialchars($ata['assunto']) ?></h5>
               <p><?= nl2br(htmlspecialchars($ata['anotacoes'])) ?></p>
               <small class="text-muted">
-                📅 <?= date('d/m/Y H:i', strtotime($ata['data'])) ?><br>
-                👥 <?= $ata['qtd_participantes'] ?> participantes<br>
+                <img src="../assets/img/data.svg" alt="imagem ata" class=" img-btn">
+                <?= date('d/m/Y H:i', strtotime($ata['data'])) ?><br>
+                <img src="../assets/img/participantes.svg" alt="imagem ata" class=" img-btn">
+                <?= $ata['qtd_participantes'] ?> participantes<br>
                 <em>Participantes:</em> <?= htmlspecialchars($ata['participantes']) ?>
               </small>
             </div>
@@ -260,7 +267,7 @@ $resAtrasosRecentes = $conexao->query($sqlAtrasosRecentes);
           <?php while ($a = $resAtrasosRecentes->fetch_assoc()): ?>
             <div class="atraso mb-3">
               <h5><?= htmlspecialchars($a['aluno']) ?></h5>
-              <p class="mb-1"><strong>Data:</strong> <?= date('d/m/Y', strtotime($a['data'])) ?></p>
+              <p class="mb-1"> <img src="../assets/img/data.svg" alt="imagem ata" class=" img-btn"> <strong>Data:</strong>  <?= date('d/m/Y', strtotime($a['data'])) ?></p>
               <p><strong>Motivo:</strong> <?= htmlspecialchars($a['motivo'] ?? '—') ?></p>
             </div>
           <?php endwhile; ?>

@@ -4,6 +4,11 @@ include '../conexao.php';
 
 // pega o servidor logado (quem está registrando o atraso)
 $idServidor = $_SESSION['usuario']['idUSUARIO'] ?? 0;
+
+if (!isset($_SESSION['usuario'])) {
+    header('Location: ../LOGIN/login.php');
+    exit;
+}
 ?>
 
 <!DOCTYPE html>

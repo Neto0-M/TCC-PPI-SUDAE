@@ -120,11 +120,11 @@ $qrcode = "https://quickchart.io/qr?text=" . urlencode($matricula);
 
     footer {
       position: absolute;
-      bottom: 2px;
       width: 100%;
       text-align: center;
       color: #666;
       font-size: 0.9rem;
+      padding-top: 5px;
       padding-bottom: 5px;
     }
   </style>

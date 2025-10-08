@@ -2,7 +2,7 @@
 require_once '../conexao.php';
 session_start();
 
-// 🔒 Verifica se o usuário está logado
+//  Verifica se o usuário está logado
 if (!isset($_SESSION['usuario'])) {
     header("Location: ../LOGIN/login.php");
     exit;
@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['ac
     $idRedator = $_SESSION['usuario']['idUSUARIO']; // redator é o usuário logado
     $participantes = isset($_POST['participantes']) ? $_POST['participantes'] : [];
 
-    // 1️⃣ Cria a ATA
+    //  Cria a ATA
     $sql = "INSERT INTO ATA (data, assunto, anotacoes, encaminhamentos, idRedator) 
             VALUES (?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['ac
     if ($stmt->execute()) {
         $idAta = $stmt->insert_id; // pega o ID da ATA criada
 
-        // 2️⃣ Insere os participantes (se houver)
+        //  Insere os participantes (se houver)
         if (!empty($participantes)) {
             $sql_part = "INSERT INTO PARTICIPANTES (idAta, idUSUARIO, dataRegistro, assinatura) 
                          VALUES (?, ?, NOW(), 'N')";
@@ -122,7 +122,7 @@ if (!$result) {
 </form>
 
 <script>
-    // 🔧 Limite de participantes conforme campo numérico
+    //  Limite de participantes conforme campo numérico
     const numInput = document.getElementById("numParticipantes");
     const selectBox = document.getElementById("selectParticipantes");
 
