@@ -1,35 +1,35 @@
 <?php 
 include '../conexao.php'; 
 
-
 $mensagem = '';
 $sucesso = false;
 
-// Função para validar senha (agora com somente a exigência de 8 caracteres)
 function validarSenha($senha) {
     $erros = [];
-
     if (strlen($senha) < 8) {
         $erros[] = "A senha deve ter no mínimo 8 caracteres.";
     }
-
     return $erros;
 }
 
 if (isset($_POST['cadastrar'])) {
     $nome = $_POST['nome'];
     $matricula = $_POST['matricula'];
+    $email = $_POST['email'];
     $senhaDigitada = $_POST['senha'];
     $tipo = $_POST['tipo'];
+    $curso = $_POST['curso'] ?? null;
+    $turma = $_POST['turma'] ?? null;
+    $materia = $_POST['materia'] ?? null;
     $login = $matricula;
 
-    // Validação antes de salvar
     $errosSenha = validarSenha($senhaDigitada);
 
-    if (!empty($errosSenha)) {
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $mensagem = "Por favor, insira um e-mail válido.";
+    } elseif (!empty($errosSenha)) {
         $mensagem = implode("<br>", $errosSenha);
     } else {
-        // Verificar se já existe a matrícula
         $check = $conexao->prepare("SELECT matricula FROM usuario WHERE matricula = ?");
         $check->bind_param("s", $matricula);
         $check->execute();
@@ -40,9 +40,12 @@ if (isset($_POST['cadastrar'])) {
         } else {
             $senha = password_hash($senhaDigitada, PASSWORD_DEFAULT);
 
-            $sql = "INSERT INTO usuario (nome, matricula, login, senha, tipo) 
-                    VALUES ('$nome', '$matricula', '$login', '$senha', '$tipo')";
-            if ($conexao->query($sql)) {
+            $sql = "INSERT INTO usuario (nome, matricula, login, senha, tipo, email, curso, turma, materia) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            $stmt = $conexao->prepare($sql);
+            $stmt->bind_param("ssssisss", $nome, $matricula, $login, $senha, $tipo, $email, $curso, $turma, $materia);
+
+            if ($stmt->execute()) {
                 $mensagem = "Cadastro realizado com sucesso!";
                 $sucesso = true;
             } else {
@@ -116,6 +119,17 @@ if (isset($_POST['cadastrar'])) {
     .btn-cadastrar:hover {
       background-color: #146c43;
     }
+
+    .btn-secundary{
+      text-align: center;
+    }
+
+    .btn a{
+      text-align: center;
+      text-decoration: none;
+      color: white;
+    }
+
     .form-control:focus {
       box-shadow: none;
       border-color: #198754;
@@ -128,9 +142,23 @@ if (isset($_POST['cadastrar'])) {
       text-decoration: underline;
     }
 
+  #camposAluno,
+  #camposProfessor {
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.5s ease;
+  }
+
+  #camposAluno.show,
+  #camposProfessor.show {
+    opacity: 1;
+    max-height: 300px;
+    margin-top: 10px;
+  }
+
     footer {
       position: absolute;
-      bottom: 2px;
       width: 100%;
       text-align: center;
       color: #666;
@@ -166,39 +194,67 @@ if (isset($_POST['cadastrar'])) {
           <label for="nome" class="form-label">Nome Completo</label>
           <input type="text" name="nome" class="form-control" required>
         </div>
+
         <div class="mb-3">
-          <label for="matricula" class="form-label">Matricula</label>
+          <label for="matricula" class="form-label">Matrícula</label>
           <input type="text" name="matricula" class="form-control" required
-                 pattern=".{10,}"
-                 title="A matrícula deve ter no mínimo 10 caracteres.">
+                 pattern=".{10,}" title="A matrícula deve ter no mínimo 10 caracteres.">
         </div>
+
+        <div class="mb-3">
+          <label for="email" class="form-label">E-mail</label>
+          <input type="email" name="email" class="form-control" required>
+        </div>
+
         <div class="mb-3">
           <label for="senha" class="form-label">Senha</label>
           <input type="password" name="senha" class="form-control" required
-                 pattern=".{8,}"
-                 title="A senha deve ter no mínimo 8 caracteres.">
+                 pattern=".{8,}" title="A senha deve ter no mínimo 8 caracteres.">
         </div>
+
         <div class="mb-3">
           <label for="tipo" class="form-label">Tipo de Usuário</label>
-          <select name="tipo" class="form-select" required>
+          <select name="tipo" id="tipo" class="form-select" required>
+            <option value="">Selecione...</option>
             <option value="3">Aluno</option>
             <option value="2">Professor</option>
             <option value="1">Servidor AE</option>
           </select>
         </div>
+
+        <div id="camposAluno">
+          <div class="mb-3">
+            <label for="curso" class="form-label">Curso</label>
+            <input type="text" name="curso" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label for="turma" class="form-label">Turma</label>
+            <input type="text" name="turma" class="form-control">
+          </div>
+        </div>
+
+        <div id="camposProfessor">
+          <div class="mb-3">
+            <label for="materia" class="form-label">Matéria</label>
+            <input type="text" name="materia" class="form-control">
+          </div>
+        </div>
+
         <div class="d-grid mb-3">
           <button type="submit" name="cadastrar" class="btn btn-cadastrar text-white">Cadastrar</button>
         </div>
       </form>
     <?php else: ?>
       <div class="text-center mt-3">
-        <a href="login.php" name="login" class="btn btn-success">Ir para login</a>
+        <a href="login.php" class="btn btn-success">Ir para login</a>
       </div>
     <?php endif; ?>
 
     <div class="cadastro-links text-center mt-3">
-      <a href="login.php">Já tem conta? Faça login</a>
-      <br>
+      <a href="login.php">Já tem conta? Faça login</a><br>  
+    </div>
+
+    <div class="btn btn-secondary">
       <a href="../DASHBOARD/dashboard.php">Voltar</a>
     </div>
   </div>
@@ -208,6 +264,24 @@ if (isset($_POST['cadastrar'])) {
   <p>© <?= date('Y') ?> SUDAE - Sistema Unificado da Assistência Estudantil</p>
 </footer>
 
+<script>
+const tipoSelect = document.getElementById('tipo');
+const camposAluno = document.getElementById('camposAluno');
+const camposProfessor = document.getElementById('camposProfessor');
+
+tipoSelect.addEventListener('change', function() {
+  // Esconde ambos inicialmente
+  camposAluno.classList.remove('show');
+  camposProfessor.classList.remove('show');
+
+  // Mostra apenas o necessário
+  if (this.value === '3') { // aluno
+    camposAluno.classList.add('show');
+  } else if (this.value === '2') { // professor
+    camposProfessor.classList.add('show');
+  }
+});
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

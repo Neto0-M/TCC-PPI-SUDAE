@@ -3,7 +3,7 @@ include '../conexao.php'; // conexão com banco SUDAE
 
 // === FUNÇÃO PARA FORMATAR DATA ===
 function data_br($data) {
-    return date('d/m/Y', strtotime($data));
+    return date('d/m/Y H:i:s', strtotime($data));
 }
 
 // === LISTAR ALUNOS PARA O FORMULÁRIO ===
@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $subject = "Registro de atraso do aluno " . $aluno['nome'];
             $message = "Prezado(a) Professor(a) " . $professor['nome'] . ",\n\n";
             $message .= "Foi registrado um atraso para o aluno com matrícula: $matricula\n";
-            $message .= "Data: " . date('d/m/Y', strtotime($data)) . "\n";
+            $message .= "Data: " . date('d/m/Y H:i:s', strtotime($data)) . "\n";
             $message .= "Motivo: $motivo\n\n";
             $message .= "Atenciosamente,\nSistema de Registro de Atrasos";
 
@@ -169,7 +169,7 @@ a:hover { text-decoration: underline; }
                value="<?= htmlspecialchars($edit['matricula'] ?? '') ?>">
     </label><br>
     <label>Data:<br>
-        <input type="date" name="data" required value="<?= htmlspecialchars($edit['data'] ?? date('Y-m-d')) ?>">
+        <input type="datetime-local" name="data" required value="<?= htmlspecialchars($edit['data'] ?? date('d/m/Y H:i:s')) ?>">
     </label><br>
 
     <label>Professor:<br>
