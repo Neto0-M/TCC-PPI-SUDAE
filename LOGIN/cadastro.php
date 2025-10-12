@@ -120,10 +120,6 @@ if (isset($_POST['cadastrar'])) {
       background-color: #146c43;
     }
 
-    .btn-secundary{
-      text-align: center;
-    }
-
     .btn a{
       text-align: center;
       text-decoration: none;

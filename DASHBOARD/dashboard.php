@@ -44,7 +44,8 @@ if ($tipo == 3) {
 }
 
 /* ------------------ ATAS ------------------ */
-if ($tipo == 3 || $tipo == 2) {
+if ($tipo == 1) {
+    // AE (Servidor da Assistência Estudantil) — vê todas as atas
     $sqlAtas = "
         SELECT a.idATA, a.assunto, a.`data`, a.anotacoes,
                GROUP_CONCAT(u.nome ORDER BY u.nome SEPARATOR ', ') AS participantes,
@@ -52,7 +53,24 @@ if ($tipo == 3 || $tipo == 2) {
         FROM ATA a
         LEFT JOIN PARTICIPANTES p ON a.idATA = p.idAta
         LEFT JOIN USUARIO u ON p.idUSUARIO = u.idUSUARIO
-        WHERE a.idRedator = ?
+        GROUP BY a.idATA
+        ORDER BY a.`data` DESC
+    ";
+    $resAtas = $conexao->query($sqlAtas);
+    $resQtd = $conexao->query("SELECT COUNT(*) AS total FROM ATA");
+
+} elseif ($tipo == 2 || $tipo == 3) {
+    // Professor ou Aluno — vê atas em que participou
+    $sqlAtas = "
+        SELECT a.idATA, a.assunto, a.`data`, a.anotacoes,
+               GROUP_CONCAT(u.nome ORDER BY u.nome SEPARATOR ', ') AS participantes,
+               COUNT(u.idUSUARIO) AS qtd_participantes
+        FROM ATA a
+        LEFT JOIN PARTICIPANTES p ON a.idATA = p.idAta
+        LEFT JOIN USUARIO u ON p.idUSUARIO = u.idUSUARIO
+        WHERE a.idATA IN (
+            SELECT idAta FROM PARTICIPANTES WHERE idUSUARIO = ?
+        )
         GROUP BY a.idATA
         ORDER BY a.`data` DESC
     ";
@@ -61,23 +79,16 @@ if ($tipo == 3 || $tipo == 2) {
     $stmtAtas->execute();
     $resAtas = $stmtAtas->get_result();
 
-    $stmtQtd = $conexao->prepare("SELECT COUNT(*) AS total FROM ATA WHERE idRedator = ?");
+    $stmtQtd = $conexao->prepare("
+        SELECT COUNT(DISTINCT idAta) AS total 
+        FROM PARTICIPANTES 
+        WHERE idUSUARIO = ?
+    ");
     $stmtQtd->bind_param("i", $idUsuario);
     $stmtQtd->execute();
     $resQtd = $stmtQtd->get_result();
-} else {
-    $resAtas = $conexao->query("
-        SELECT a.idATA, a.assunto, a.`data`, a.anotacoes,
-               GROUP_CONCAT(u.nome SEPARATOR ', ') AS participantes,
-               COUNT(u.idUSUARIO) AS qtd_participantes
-        FROM ATA a
-        LEFT JOIN PARTICIPANTES p ON a.idATA = p.idAta
-        LEFT JOIN USUARIO u ON p.idUSUARIO = u.idUSUARIO
-        GROUP BY a.idATA
-        ORDER BY a.`data` DESC
-    ");
-    $resQtd = $conexao->query("SELECT COUNT(*) AS total FROM ATA");
 }
+
 $qtdAtas = $resQtd->fetch_assoc()['total'] ?? 0;
 
 /* ------------------ ATRASOS RECENTES (últimos 30 dias) ------------------ */
@@ -160,21 +171,18 @@ $resAtrasosRecentes = $conexao->query($sqlAtrasosRecentes);
     gap: 27rem !important;
   }
 
-  .img-btn {
+    .img-btn {
     width: 24px; 
     padding-bottom: 3px;
   }
 
     footer {
-      position: absolute;
-      bottom: 1px;
-      width: 100%;
-      text-align: center;
-      color: #666;
-      font-size: 0.9rem;
-      padding-bottom: 5px;
-    }
-  </style>
+    text-align: center;
+    color: #666;
+    font-size: 0.9rem;
+    padding: 10px 0;
+  }
+</style>
 </head>
 
 <body>
@@ -194,7 +202,7 @@ $resAtrasosRecentes = $conexao->query($sqlAtrasosRecentes);
   <div class="text-center mb-4">
     <h2 class="fw-bold text-success">Bem-vindo, <?= htmlspecialchars($usuario['nome']); ?>!</h2>
     <?php if ($tipo == 1): ?>
-      <p class="text-muted">Painel do Servidor AE — Gerencie atrasos, atas e relatórios.</p>
+      <p class="text-muted">Painel do Servidor AE — Gerencie atrasos e atas</p>
     <?php elseif ($tipo == 2): ?>
       <p class="text-muted">Painel do Professor — Visualize atas e consulte atrasos.</p>
     <?php else: ?>
@@ -233,7 +241,6 @@ $resAtrasosRecentes = $conexao->query($sqlAtrasosRecentes);
   </div>
   <?php endif; ?>
 
-  <!-- Seções lado a lado -->
   <div class="row g-4">
     <!-- ATAs Recentes -->
     <div class="col-md-6">
