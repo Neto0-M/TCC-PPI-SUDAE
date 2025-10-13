@@ -134,11 +134,12 @@ if ($result) {
 
         <div class="d-flex justify-content-center gap-3 mt-4">
           <button type="submit" class="btn btn-success px-4">Registrar</button>
-          <a href="../ATRASOS/atrasos.php" class="btn btn-secondary px-4">Voltar</a>
+          <a href="scanner.php" class="btn btn-danger px-4">Cancelar</a>
         </div>
       </form>
     </div>
   </div>
+  <a href="../ATRASOS/atrasos.php" class="btn btn-secondary px-4 mt-3">Voltar</a>
 </div>
 
 

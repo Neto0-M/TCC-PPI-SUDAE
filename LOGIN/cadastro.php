@@ -20,7 +20,6 @@ if (isset($_POST['cadastrar'])) {
     $tipo = $_POST['tipo'];
     $curso = $_POST['curso'] ?? null;
     $turma = $_POST['turma'] ?? null;
-    $materia = $_POST['materia'] ?? null;
     $login = $matricula;
 
     $errosSenha = validarSenha($senhaDigitada);
@@ -40,10 +39,9 @@ if (isset($_POST['cadastrar'])) {
         } else {
             $senha = password_hash($senhaDigitada, PASSWORD_DEFAULT);
 
-            $sql = "INSERT INTO usuario (nome, matricula, login, senha, tipo, email, curso, turma, materia) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-            $stmt = $conexao->prepare($sql);
-            $stmt->bind_param("ssssisss", $nome, $matricula, $login, $senha, $tipo, $email, $curso, $turma, $materia);
+            $stmt = $conexao->prepare("INSERT INTO usuario (nome, matricula, login, senha, tipo, email, curso, turma) 
+                                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("ssssisss", $nome, $matricula, $login, $senha, $tipo, $email, $curso, $turma);
 
             if ($stmt->execute()) {
                 $mensagem = "Cadastro realizado com sucesso!";
@@ -56,6 +54,7 @@ if (isset($_POST['cadastrar'])) {
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -120,31 +119,23 @@ if (isset($_POST['cadastrar'])) {
       background-color: #146c43;
     }
 
-    .btn a{
-      text-align: center;
-      text-decoration: none;
-      color: white;
-    }
-
     .form-control:focus {
       box-shadow: none;
       border-color: #198754;
     }
 
-  #camposAluno,
-  #camposProfessor {
-    opacity: 0;
-    max-height: 0;
-    overflow: hidden;
-    transition: all 0.5s ease;
-  }
+    #camposAluno {
+      opacity: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: all 0.5s ease;
+    }
 
-  #camposAluno.show,
-  #camposProfessor.show {
-    opacity: 1;
-    max-height: 300px;
-    margin-top: 10px;
-  }
+    #camposAluno.show {
+      opacity: 1;
+      max-height: 300px;
+      margin-top: 10px;
+    }
 
     footer {
       position: absolute;
@@ -222,13 +213,6 @@ if (isset($_POST['cadastrar'])) {
           </div>
         </div>
 
-        <div id="camposProfessor">
-          <div class="mb-3">
-            <label for="materia" class="form-label">Matéria</label>
-            <input type="text" name="materia" class="form-control">
-          </div>
-        </div>
-
         <div class="d-grid mb-3">
           <button type="submit" name="cadastrar" class="btn btn-cadastrar text-white">Cadastrar</button>
         </div>
@@ -239,11 +223,9 @@ if (isset($_POST['cadastrar'])) {
       </div>
     <?php endif; ?>
 
-
     <div class="text-center mt-3">
       <a href="../DASHBOARD/dashboard.php" class="btn btn-secondary px-4">Voltar</a>
     </div>
-
   </div>
 </div>
 
@@ -254,18 +236,11 @@ if (isset($_POST['cadastrar'])) {
 <script>
 const tipoSelect = document.getElementById('tipo');
 const camposAluno = document.getElementById('camposAluno');
-const camposProfessor = document.getElementById('camposProfessor');
 
 tipoSelect.addEventListener('change', function() {
-  // Esconde ambos inicialmente
   camposAluno.classList.remove('show');
-  camposProfessor.classList.remove('show');
-
-  // Mostra apenas o necessário
-  if (this.value === '3') { // aluno
+  if (this.value === '3') {
     camposAluno.classList.add('show');
-  } else if (this.value === '2') { // professor
-    camposProfessor.classList.add('show');
   }
 });
 </script>

@@ -96,15 +96,32 @@ if ($tipo == 1) {
 $qtdAtas = $resQtd->fetch_assoc()['total'] ?? 0;
 
 /* ------------------ ATRASOS RECENTES ------------------ */
-$sqlAtrasosRecentes = "
-    SELECT a.idATRASO, u.nome AS aluno, a.data, a.motivo
-    FROM ATRASO a
-    INNER JOIN USUARIO u ON a.idAluno = u.idUSUARIO
-    WHERE a.data >= DATE_SUB(NOW(), INTERVAL ? DAY)
-    ORDER BY a.data DESC
-";
-$stmtRecentes = $conexao->prepare($sqlAtrasosRecentes);
-$stmtRecentes->bind_param("i", $diasAtrasos);
+$searchAluno = isset($_GET['searchAluno']) ? trim($_GET['searchAluno']) : '';
+
+if ($searchAluno !== '') {
+    $sqlAtrasosRecentes = "
+        SELECT a.idATRASO, u.nome AS aluno, a.data, a.motivo
+        FROM ATRASO a
+        INNER JOIN USUARIO u ON a.idAluno = u.idUSUARIO
+        WHERE a.data >= DATE_SUB(NOW(), INTERVAL ? DAY)
+          AND u.nome LIKE CONCAT('%', ?, '%')
+        ORDER BY a.data DESC
+    ";
+    $stmtRecentes = $conexao->prepare($sqlAtrasosRecentes);
+    $stmtRecentes->bind_param("is", $diasAtrasos, $searchAluno);
+} else {
+    $sqlAtrasosRecentes = "
+        SELECT a.idATRASO, u.nome AS aluno, a.data, a.motivo
+        FROM ATRASO a
+        INNER JOIN USUARIO u ON a.idAluno = u.idUSUARIO
+        WHERE a.data >= DATE_SUB(NOW(), INTERVAL ? DAY)
+        ORDER BY a.data DESC
+    ";
+    $stmtRecentes = $conexao->prepare($sqlAtrasosRecentes);
+    $stmtRecentes->bind_param("i", $diasAtrasos);
+}
+
+
 $stmtRecentes->execute();
 $resAtrasosRecentes = $stmtRecentes->get_result();
 ?>
@@ -220,22 +237,31 @@ footer { text-align: center; color: #666; font-size: 0.9rem; padding: 10px 0; }
       <?php endif; ?>
     </div>
 
-    <!-- Atrasos Recentes -->
-    <div class="col-md-6">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <h4 class="fw-bold text-success">Atrasos Recentes</h4>
-        <div class="filtro-container">
-          <form method="get" class="m-0 p-0">
-            <input type="hidden" name="diasAtas" value="<?= $diasAtas ?>">
-            <select name="diasAtrasos" class="form-select form-select-sm" onchange="this.form.submit()">
-              <option value="30" <?= $diasAtrasos==30?'selected':'' ?>>Últimos 30 dias</option>
-              <option value="15" <?= $diasAtrasos==15?'selected':'' ?>>Últimos 15 dias</option>
-              <option value="7" <?= $diasAtrasos==7?'selected':'' ?>>Últimos 7 dias</option>
-              <option value="1" <?= $diasAtrasos==1?'selected':'' ?>>Último dia</option>
-            </select>
-          </form>
-        </div>
-      </div>
+<!-- Atrasos Recentes -->
+<div class="col-md-6">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h4 class="fw-bold text-success">Atrasos Recentes</h4>
+  </div>
+
+  <!-- Campo de busca e filtro de dias (lado a lado) -->
+  <form method="get" class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <input type="hidden" name="diasAtas" value="<?= $diasAtas ?>">
+
+    <div class="input-group input-group-sm" style="width: 250px;">
+      <input type="text" name="searchAluno" class="form-control" placeholder="Pesquisar aluno..."
+             value="<?= htmlspecialchars($_GET['searchAluno'] ?? '') ?>">
+      <button class="btn btn-success" type="submit">Buscar</button>
+    </div>
+
+    <select name="diasAtrasos" class="form-select form-select-sm" onchange="this.form.submit()" style="width: 160px;">
+      <option value="30" <?= $diasAtrasos==30?'selected':'' ?>>Últimos 30 dias</option>
+      <option value="15" <?= $diasAtrasos==15?'selected':'' ?>>Últimos 15 dias</option>
+      <option value="7" <?= $diasAtrasos==7?'selected':'' ?>>Últimos 7 dias</option>
+      <option value="1" <?= $diasAtrasos==1?'selected':'' ?>>Último dia</option>
+    </select>
+  </form>
+
+
       <?php if ($resAtrasosRecentes && $resAtrasosRecentes->num_rows > 0): ?>
         <?php while ($a = $resAtrasosRecentes->fetch_assoc()): ?>
           <div class="atraso mb-3">
