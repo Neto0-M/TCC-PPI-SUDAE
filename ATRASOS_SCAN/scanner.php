@@ -29,12 +29,64 @@ if ($result) {
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 <style>
-body { background-color: #e6f4ec; font-family: 'Segoe UI', sans-serif; }
-.fade-in { opacity: 0; transform: translateY(10px); animation: fadeIn 0.6s ease forwards; }
-@keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+    body {
+      background-color: #e6f4ec;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .logo {
+      position: absolute;
+      left: 25px;
+      width: 50px;
+      height: auto;
+    }
+    header {
+      background-color: #fff;
+      padding: 15px 40px;
+      border-bottom: 2px solid #dceee2;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      position: relative;
+    }
+    header h1 {
+      position: absolute;
+      left: 140px;
+      font-size: 1.2rem;
+      color: #198754;
+      font-weight: bold;
+      margin: 0;
+    }
+    footer{
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    color: #666;
+    font-size: 0.9rem;
+    padding: 10px 0;
+    }
+
+.fade-in { 
+    opacity: 0; 
+    transform: translateY(10px); 
+    animation: fadeIn 0.6s ease forwards; 
+}
+@keyframes fadeIn { 
+    to { opacity: 1; transform: translateY(0); } 
+}
 </style>
 </head>
 <body>
+<header>
+  <img src="../assets/img/SUDAE.svg" alt="Logo SUDAE" class="logo">
+  <h1>Sistema Unificado da Assistência Estudantil</h1>
+  <nav>
+    <a href="../LOGIN/cadastro.php" class="btn btn-outline-success btn-sm">Cadastrar</a>
+    <a href="../DASHBOARD/dados.php" class="btn btn-outline-secondary btn-sm me-2">Meus Dados</a>
+    <a href="../LOGIN/logout.php" class="btn btn-danger btn-sm">Sair</a>
+  </nav>
+</header>
 <div class="container py-5 text-center">
   <h2 class="text-success mb-4">Escanear QR Code</h2>
   <div id="reader" style="width:300px; margin:auto;"></div>
@@ -82,21 +134,17 @@ body { background-color: #e6f4ec; font-family: 'Segoe UI', sans-serif; }
 
         <div class="d-flex justify-content-center gap-3 mt-4">
           <button type="submit" class="btn btn-success px-4">Registrar</button>
+          <a href="../ATRASOS/atrasos.php" class="btn btn-secondary px-4">Voltar</a>
         </div>
       </form>
     </div>
   </div>
 </div>
 
-<div class="d-flex justify-content-center gap-3 mt-4">
-          <a href="../ATRASOS/atrasos.php" class="btn btn-secondary px-4">
-            <i class="bi bi-arrow-left"></i> Voltar
-          </a>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
+
+<footer>
+  © <?= date('Y') ?> SUDAE - Sistema Unificado da Assistência Estudantil
+</footer>
 
 <script>
 // Função chamada quando QR é lido
@@ -126,7 +174,7 @@ function onScanSuccess(decodedText) {
       });
 }
 
-// Inicializa o scanner (fora da função)
+// Inicializa o scanner
 var html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
 html5QrcodeScanner.render(onScanSuccess);
 
@@ -147,5 +195,6 @@ document.getElementById("form-registro").addEventListener("submit", function(e) 
 });
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -36,11 +36,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $idServidor = 1; // exemplo
 
     if ($id > 0) {
-        $stmt = $conexao->prepare("UPDATE ATRASO SET idAluno=?, data=?, notificado='N', motivo=? WHERE idATRASO=?");
-        $stmt->bind_param("issi", $idAluno, $data, $motivo, $id);
+        $stmt = $conexao->prepare("UPDATE ATRASO SET idAluno=?, idProfessor=?, data=?, notificado='N', motivo=? WHERE idATRASO=?");
+        $stmt->bind_param("iissi", $idAluno, $idProfessor, $data, $motivo, $id);
     } else {
-        $stmt = $conexao->prepare("INSERT INTO ATRASO (idAluno, idServidor, data, notificado, motivo) VALUES (?, ?, ?, 'N', ?)");
-        $stmt->bind_param("iiss", $idAluno, $idServidor, $data, $motivo);
+        $stmt = $conexao->prepare("INSERT INTO ATRASO (idAluno, idServidor, idProfessor, data, notificado, motivo) VALUES (?, ?, ?, ?, 'N', ?)");
+        $stmt->bind_param("iiiss", $idAluno, $idServidor, $idProfessor, $data, $motivo);
     }
     $stmt->execute();
     $stmt->close();
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $subject = "Registro de atraso - " . $aluno['nome'];
             $message = "Prezado(a) {$professor['nome']},\n\nFoi registrado um atraso para o aluno {$aluno['nome']}.\nMatrícula: $matricula\nData: " . date('d/m/Y H:i:s', strtotime($data)) . "\nMotivo: $motivo\n\nAtenciosamente,\nSistema SUDAE";
             $headers = "From: no-reply@sudae.com.br\r\n";
-            mail($to, $subject, $message, $headers);
+            mail($to, $subject, $message, $headers); 
         }
     }
 
@@ -81,7 +81,7 @@ if (isset($_GET['delete'])) {
 $edit = null;
 if (isset($_GET['edit'])) {
     $id = intval($_GET['edit']);
-    $stmt = $conexao->prepare("SELECT a.idATRASO, a.data, u.matricula, u.nome, a.motivo
+    $stmt = $conexao->prepare("SELECT a.idATRASO, a.data, a.idProfessor, u.matricula, u.nome, a.motivo
         FROM ATRASO a INNER JOIN USUARIO u ON a.idAluno = u.idUSUARIO WHERE a.idATRASO = ?");
     $stmt->bind_param("i", $id);
     $stmt->execute();
@@ -91,12 +91,14 @@ if (isset($_GET['edit'])) {
 
 // === LISTAR ATRASOS ===
 $atrasos = [];
-$res = $conexao->query("SELECT a.idATRASO, a.data, u.matricula, u.nome, a.motivo
+$res = $conexao->query("SELECT a.idATRASO, a.data, u.matricula, u.nome, p.nome AS professor, a.motivo
                         FROM ATRASO a
                         INNER JOIN USUARIO u ON a.idAluno = u.idUSUARIO
+                        LEFT JOIN USUARIO p ON a.idProfessor = p.idUSUARIO
                         ORDER BY a.data DESC");
 if ($res) while ($r = $res->fetch_assoc()) $atrasos[] = $r;
 ?>
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -104,65 +106,24 @@ if ($res) while ($r = $res->fetch_assoc()) $atrasos[] = $r;
 <title>Registro de Atrasos - SUDAE</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-body {
-  background-color: #e6f4ec;
-  font-family: 'Segoe UI', sans-serif;
-  min-height: 100vh;
-  position: relative;
-}
-header {
-  background-color: #fff;
-  padding: 15px 40px;
-  border-bottom: 2px solid #dceee2;
-  display: flex;
-  align-items: center;
-  position: relative;
-}
-.logo {
-  position: absolute;
-  left: 25px;
-  width: 50px;
-  height: auto;
-}
-header h1 {
-  position: absolute;
-  left: 100px;
-  font-size: 1.2rem;
-  color: #198754;
-  font-weight: bold;
-}
-.card {
-  border-radius: 12px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.05);
-}
-footer {
-  text-align: center;
-  padding: 10px;
-  color: #666;
-  font-size: 0.9rem;
-  margin-top: 50px;
-}
-.fade-form {
-  opacity: 0;
-  transform: translateY(10px);
-  animation: fadeIn 0.6s ease forwards;
-}
-@keyframes fadeIn {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+body { background-color: #e6f4ec; font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
+.logo { position: absolute; left: 25px; width: 50px; height: auto; }
+header { background-color: #fff; padding: 15px 40px; border-bottom: 2px solid #dceee2; display: flex; justify-content: flex-end; align-items: center; position: relative; }
+header h1 { position: absolute; left: 140px; font-size: 1.2rem; color: #198754; font-weight: bold; margin: 0; }
+.card { border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.05); }
+footer { text-align: center; padding: 10px; color: #666; font-size: 0.9rem; margin-top: 50px; }
+.fade-form { opacity: 0; transform: translateY(10px); animation: fadeIn 0.6s ease forwards; }
+@keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
 <body>
-<header class="d-flex align-items-center justify-content-between px-4 py-3 bg-white border-bottom">
-  <div class="d-flex align-items-center">
-    <img src="../assets/img/SUDAE.svg" alt="Logo SUDAE" class="logo me-3">
-    <h1 class="h5 text-success m-0">Registro de Atrasos</h1>
-  </div>
-  
+
+<header>
+  <img src="../assets/img/SUDAE.svg" alt="Logo SUDAE" class="logo">
+  <h1>Sistema Unificado da Assistência Estudantil</h1>
   <nav>
+    <a href="../LOGIN/cadastro.php" class="btn btn-outline-success btn-sm">Cadastrar</a>
+    <a href="../DASHBOARD/dados.php" class="btn btn-outline-secondary btn-sm me-2">Meus Dados</a>
     <a href="../LOGIN/logout.php" class="btn btn-danger btn-sm">Sair</a>
   </nav>
 </header>
@@ -190,8 +151,10 @@ footer {
         <label class="form-label">Professor</label>
         <select name="idProfessor" class="form-select" required>
           <option value="">Selecione um professor</option>
-          <?php foreach ($professores as $p): ?>
-            <option value="<?= $p['idUSUARIO'] ?>"><?= htmlspecialchars($p['nome']) ?> (<?= htmlspecialchars($p['email']) ?>)</option>
+          <?php foreach ($professores as $p): 
+              $selected = ($edit && $edit['idProfessor'] == $p['idUSUARIO']) ? 'selected' : '';
+          ?>
+            <option value="<?= $p['idUSUARIO'] ?>" <?= $selected ?>><?= htmlspecialchars($p['nome']) ?> (<?= htmlspecialchars($p['email']) ?>)</option>
           <?php endforeach; ?>
         </select>
       </div>
@@ -234,6 +197,8 @@ footer {
         <thead class="table-success">
           <tr>
             <th>Matrícula</th>
+            <th>Aluno</th>
+            <th>Professor</th>
             <th>Data</th>
             <th>Motivo</th>
             <th>Ações</th>
@@ -243,6 +208,8 @@ footer {
           <?php if ($atrasos): foreach ($atrasos as $a): ?>
             <tr>
               <td><?= htmlspecialchars($a['matricula']) ?></td>
+              <td><?= htmlspecialchars($a['nome']) ?></td>
+              <td><?= htmlspecialchars($a['professor'] ?? '-') ?></td>
               <td><?= data_br($a['data']) ?></td>
               <td><?= htmlspecialchars($a['motivo']) ?></td>
               <td>
@@ -252,7 +219,7 @@ footer {
               </td>
             </tr>
           <?php endforeach; else: ?>
-            <tr><td colspan="4" class="text-center text-muted">Nenhum registro encontrado.</td></tr>
+            <tr><td colspan="6" class="text-center text-muted">Nenhum registro encontrado.</td></tr>
           <?php endif; ?>
         </tbody>
       </table>

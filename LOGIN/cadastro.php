@@ -130,13 +130,6 @@ if (isset($_POST['cadastrar'])) {
       box-shadow: none;
       border-color: #198754;
     }
-    .cadastro-links a {
-      color: #198754;
-      text-decoration: none;
-    }
-    .cadastro-links a:hover {
-      text-decoration: underline;
-    }
 
   #camposAluno,
   #camposProfessor {
@@ -246,13 +239,11 @@ if (isset($_POST['cadastrar'])) {
       </div>
     <?php endif; ?>
 
-    <div class="cadastro-links text-center mt-3">
-      <a href="login.php">Já tem conta? Faça login</a><br>  
+
+    <div class="text-center mt-3">
+      <a href="../DASHBOARD/dashboard.php" class="btn btn-secondary px-4">Voltar</a>
     </div>
 
-    <div class="btn btn-secondary">
-      <a href="../DASHBOARD/dashboard.php">Voltar</a>
-    </div>
   </div>
 </div>
 
