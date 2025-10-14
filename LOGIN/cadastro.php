@@ -219,7 +219,7 @@ if (isset($_POST['cadastrar'])) {
       </form>
     <?php else: ?>
       <div class="text-center mt-3">
-        <a href="login.php" class="btn btn-success">Ir para login</a>
+        <a href="cadastro.php" class="btn btn-success">Cadastrar novo Usuário</a>
       </div>
     <?php endif; ?>
 
