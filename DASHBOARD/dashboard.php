@@ -151,6 +151,14 @@ footer { position: fixed;
     color: #666;
     font-size: 0.9rem;
     padding: 10px 0; }
+.hover-ata {
+  transition: background-color 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+.hover-ata:hover {
+  background-color: #f5fdf8;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+}
 .filtro-container { display: flex; align-items: center; gap: 10px; float: right; }
 </style>
 </head>
@@ -210,39 +218,46 @@ footer { position: fixed;
 
   <div class="row g-4">
     <!-- ATAs Recentes -->
-    <div class="col-md-6">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="fw-bold text-success">ATAs Recentes</h4>
-        <div class="filtro-container">
-          <form method="get" class="m-0 p-0">
-            <input type="hidden" name="diasAtrasos" value="<?= $diasAtrasos ?>">
-            <select name="diasAtas" class="form-select form-select-sm" onchange="this.form.submit()">
-              <option value="30" <?= $diasAtas==30?'selected':'' ?>>Últimos 30 dias</option>
-              <option value="15" <?= $diasAtas==15?'selected':'' ?>>Últimos 15 dias</option>
-              <option value="7" <?= $diasAtas==7?'selected':'' ?>>Últimos 7 dias</option>
-              <option value="1" <?= $diasAtas==1?'selected':'' ?>>Último dia</option>
-            </select>
-          </form>
-        </div>
-      </div>
-      <?php if ($resAtas && $resAtas->num_rows > 0): ?>
-        <?php while ($ata = $resAtas->fetch_assoc()): ?>
-          <div class="ata mb-3">
-            <h5><?= htmlspecialchars($ata['assunto']) ?></h5>
-            <p><?= nl2br(htmlspecialchars($ata['anotacoes'])) ?></p>
-            <small class="text-muted">
-              <img src="../assets/img/data.svg" alt="data" class="img-btn">
-              <?= date('d/m/Y H:i', strtotime($ata['data'])) ?><br>
-              <img src="../assets/img/participantes.svg" alt="participantes" class="img-btn">
-              <?= $ata['qtd_participantes'] ?> participantes<br>
-              <em>Participantes:</em> <?= htmlspecialchars($ata['participantes']) ?>
-            </small>
-          </div>
-        <?php endwhile; ?>
-      <?php else: ?>
-        <div class="alert alert-info text-center">Nenhuma ATA registrada ainda.</div>
-      <?php endif; ?>
+<div class="col-md-6">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold text-success">ATAs Recentes</h4>
+    <div class="filtro-container">
+      <form method="get" class="m-0 p-0">
+        <input type="hidden" name="diasAtrasos" value="<?= $diasAtrasos ?>">
+        <select name="diasAtas" class="form-select form-select-sm" onchange="this.form.submit()">
+          <option value="30" <?= $diasAtas==30?'selected':'' ?>>Últimos 30 dias</option>
+          <option value="15" <?= $diasAtas==15?'selected':'' ?>>Últimos 15 dias</option>
+          <option value="7" <?= $diasAtas==7?'selected':'' ?>>Últimos 7 dias</option>
+          <option value="1" <?= $diasAtas==1?'selected':'' ?>>Último dia</option>
+        </select>
+      </form>
     </div>
+  </div>
+
+  <?php if ($resAtas && $resAtas->num_rows > 0): ?>
+    <?php while ($ata = $resAtas->fetch_assoc()): ?>
+      <!-- Card clicável -->
+      <a href="../ATAS/cadastrar_ata.php?editar=<?= $ata['idATA'] ?>" class="text-decoration-none text-dark">
+        <div class="ata mb-3 p-3">
+          <h5><?= htmlspecialchars($ata['assunto']) ?></h5>
+          <p class="text-truncate" style="max-width: 100%;">
+            <?= nl2br(htmlspecialchars($ata['anotacoes'])) ?>
+          </p>
+          <small class="text-muted">
+            <img src="../assets/img/data.svg" alt="data" class="img-btn">
+            <?= date('d/m/Y H:i', strtotime($ata['data'])) ?><br>
+            <img src="../assets/img/participantes.svg" alt="participantes" class="img-btn">
+            <?= $ata['qtd_participantes'] ?> participantes<br>
+            <em>Participantes:</em> <?= htmlspecialchars($ata['participantes']) ?>
+          </small>
+        </div>
+      </a>
+    <?php endwhile; ?>
+  <?php else: ?>
+    <div class="alert alert-info text-center">Nenhuma ATA registrada ainda.</div>
+  <?php endif; ?>
+</div>
+
 
 <!-- Atrasos Recentes -->
 <div class="col-md-6">

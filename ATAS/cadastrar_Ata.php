@@ -2,46 +2,89 @@
 require_once '../conexao.php';
 session_start();
 
-// Verifica se o usuário está logado
+// Verifica login
 if (!isset($_SESSION['usuario'])) {
     header("Location: ../LOGIN/login.php");
     exit;
 }
 
 $idRedator = $_SESSION['usuario']['idUSUARIO'];
+$msg = "";
+$ataEdit = null;
+$participantesEdit = [];
 
-// ====== Cadastrar nova ATA ======
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['acao'] === 'cadastrar') {
+// ====== Buscar dados para edição ======
+if (isset($_GET['editar'])) {
+    $idEditar = intval($_GET['editar']);
+
+    $sql = "SELECT * FROM ATA WHERE idATA = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $idEditar);
+    $stmt->execute();
+    $ataEdit = $stmt->get_result()->fetch_assoc();
+
+    if ($ataEdit) {
+        $sql_part = "SELECT idUSUARIO FROM PARTICIPANTES WHERE idAta = ?";
+        $stmt_part = $conn->prepare($sql_part);
+        $stmt_part->bind_param("i", $idEditar);
+        $stmt_part->execute();
+        $res_part = $stmt_part->get_result();
+        while ($row = $res_part->fetch_assoc()) {
+            $participantesEdit[] = $row['idUSUARIO'];
+        }
+    }
+}
+
+// ====== Cadastrar nova ou editar ======
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $acao = $_POST['acao'] ?? '';
     $data = date("Y-m-d H:i:s", strtotime($_POST['data']));
     $assunto = $_POST['assunto'];
     $anotacoes = $_POST['anotacoes'];
     $encaminhamentos = $_POST['encaminhamentos'];
     $participantes = $_POST['participantes'] ?? [];
 
-    $sql = "INSERT INTO ATA (data, assunto, anotacoes, encaminhamentos, idRedator)
-            VALUES (?, ?, ?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssssi", $data, $assunto, $anotacoes, $encaminhamentos, $idRedator);
+    if ($acao === 'cadastrar') {
+        $sql = "INSERT INTO ATA (data, assunto, anotacoes, encaminhamentos, idRedator)
+                VALUES (?, ?, ?, ?, ?)";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("ssssi", $data, $assunto, $anotacoes, $encaminhamentos, $idRedator);
 
-    if ($stmt->execute()) {
-        $idAta = $stmt->insert_id;
-
-        if (!empty($participantes)) {
-            $sql_part = "INSERT INTO PARTICIPANTES (idAta, idUSUARIO, dataRegistro, assinatura)
-                         VALUES (?, ?, NOW(), 'N')";
-            $stmt_part = $conn->prepare($sql_part);
+        if ($stmt->execute()) {
+            $idAta = $stmt->insert_id;
             foreach ($participantes as $idUsuario) {
-                if (is_numeric($idUsuario)) {
-                    $stmt_part->bind_param("ii", $idAta, $idUsuario);
-                    $stmt_part->execute();
-                }
+                $sql_part = "INSERT INTO PARTICIPANTES (idAta, idUSUARIO, dataRegistro, assinatura)
+                             VALUES (?, ?, NOW(), 'N')";
+                $stmt_part = $conn->prepare($sql_part);
+                $stmt_part->bind_param("ii", $idAta, $idUsuario);
+                $stmt_part->execute();
             }
-            $msg = "<div class='alert alert-success'>ATA cadastrada com sucesso com " . count($participantes) . " participante(s)!</div>";
+            $msg = "<div class='alert alert-success'>ATA cadastrada com sucesso!</div>";
         } else {
-            $msg = "<div class='alert alert-warning'>ATA cadastrada, mas sem participantes vinculados.</div>";
+            $msg = "<div class='alert alert-danger'>Erro ao cadastrar ATA.</div>";
         }
-    } else {
-        $msg = "<div class='alert alert-danger'>Erro ao cadastrar ATA: " . $stmt->error . "</div>";
+    }
+
+    if ($acao === 'editar' && isset($_POST['idATA'])) {
+        $idATA = intval($_POST['idATA']);
+
+        $sql = "UPDATE ATA SET data=?, assunto=?, anotacoes=?, encaminhamentos=? WHERE idATA=?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("ssssi", $data, $assunto, $anotacoes, $encaminhamentos, $idATA);
+
+        if ($stmt->execute()) {
+            $conn->query("DELETE FROM PARTICIPANTES WHERE idAta = $idATA");
+            foreach ($participantes as $idUsuario) {
+                $sql_part = "INSERT INTO PARTICIPANTES (idAta, idUSUARIO, dataRegistro, assinatura)
+                             VALUES (?, ?, NOW(), 'N')";
+                $stmt_part = $conn->prepare($sql_part);
+                $stmt_part->bind_param("ii", $idATA, $idUsuario);
+                $stmt_part->execute();
+            }
+            $msg = "<div class='alert alert-success'>ATA atualizada com sucesso!</div>";
+        } else {
+            $msg = "<div class='alert alert-danger'>Erro ao atualizar ATA.</div>";
+        }
     }
 }
 
@@ -54,7 +97,7 @@ if (isset($_GET['delete'])) {
     $stmt->execute();
 }
 
-// ====== Buscar participantes por tipo ======
+// ====== Buscar participantes ======
 $alunos = $conn->query("SELECT idUSUARIO, nome FROM USUARIO WHERE tipo = 3 ORDER BY nome ASC");
 $professores = $conn->query("SELECT idUSUARIO, nome FROM USUARIO WHERE tipo = 2 ORDER BY nome ASC");
 $servidores = $conn->query("SELECT idUSUARIO, nome FROM USUARIO WHERE tipo = 1 ORDER BY nome ASC");
@@ -79,57 +122,13 @@ $result = $conn->query($sql_listar);
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <style>
-    body {
-      background-color: #e6f4ec;
-      font-family: 'Segoe UI', sans-serif;
-    }
-    .logo {
-      position: absolute;
-      left: 25px;
-      width: 50px;
-      height: auto;
-    }
-    header {
-      background-color: #fff;
-      padding: 15px 40px;
-      border-bottom: 2px solid #dceee2;
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      position: relative;
-    }
-    header h1 {
-      position: absolute;
-      left: 140px;
-      font-size: 1.2rem;
-      color: #198754;
-      font-weight: bold;
-      margin: 0;
-    }
-    main {
-      max-width: 1200px;
-      margin: 40px auto;
-      background: #fff;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    .coluna-participantes {
-      max-height: 300px;
-      overflow-y: auto;
-      border: 1px solid #dceee2;
-      border-radius: 8px;
-      padding: 10px;
-      background-color: #f8fdf9;
-    }
-    footer {
-      text-align: center;
-      padding: 10px;
-      color: #666;
-      font-size: 0.9rem;
-      margin-top: auto;
-
-    }
+    body { background-color: #e6f4ec; font-family: 'Segoe UI', sans-serif; }
+    .logo { position: absolute; left: 25px; width: 50px; height: auto; }
+    header { background-color: #fff; padding: 15px 40px; border-bottom: 2px solid #dceee2; display: flex; justify-content: flex-end; align-items: center; position: relative; }
+    header h1 { position: absolute; left: 140px; font-size: 1.2rem; color: #198754; font-weight: bold; margin: 0; }
+    main { max-width: 1200px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .coluna-participantes { max-height: 300px; overflow-y: auto; border: 1px solid #dceee2; border-radius: 8px; padding: 10px; background-color: #f8fdf9; }
+    footer { text-align: center; padding: 10px; color: #666; font-size: 0.9rem; margin-top: auto; }
   </style>
 </head>
 <body>
@@ -145,83 +144,80 @@ $result = $conn->query($sql_listar);
 </header>
 
 <main>
-  <h3 class="text-success mb-4">Cadastrar nova ATA</h3>
+  <h3 class="text-success mb-4">
+    <?= $ataEdit ? 'Editar ATA #' . $ataEdit['idATA'] : 'Cadastrar nova ATA' ?>
+  </h3>
 
   <?php if (!empty($msg)) echo $msg; ?>
 
   <form method="POST" class="mb-5">
-    <input type="hidden" name="acao" value="cadastrar">
+    <input type="hidden" name="acao" value="<?= $ataEdit ? 'editar' : 'cadastrar' ?>">
+    <?php if ($ataEdit): ?>
+      <input type="hidden" name="idATA" value="<?= $ataEdit['idATA'] ?>">
+    <?php endif; ?>
 
     <div class="row g-3">
       <div class="col-md-6">
         <label class="form-label fw-semibold">Data</label>
-        <input type="datetime-local" name="data" class="form-control" required>
+        <input type="datetime-local" name="data" class="form-control" required
+               value="<?= $ataEdit ? date('Y-m-d\TH:i', strtotime($ataEdit['data'])) : '' ?>">
       </div>
 
       <div class="col-md-6">
         <label class="form-label fw-semibold">Assunto</label>
-        <input type="text" name="assunto" class="form-control" required>
+        <input type="text" name="assunto" class="form-control" required
+               value="<?= htmlspecialchars($ataEdit['assunto'] ?? '') ?>">
       </div>
     </div>
 
+  <!-- Conteúdo da ATA -->
     <div class="mt-3">
       <label class="form-label fw-semibold">Conteúdo da ATA</label>
-      <textarea name="anotacoes" class="form-control" rows="3" required></textarea>
+      <!-- Container do Quill -->
+      <div id="editor" style="height: 400px; background-color: #fff; border: 1px solid #ced4da; border-radius: 4px;">
+        <?= $ataEdit['anotacoes'] ?? '' ?>
+      </div>
+    <!-- Input hidden para enviar o conteúdo ao PHP -->
+      <input type="hidden" name="anotacoes" id="anotacoes">
     </div>
 
     <div class="mt-3">
       <label class="form-label fw-semibold">Encaminhamentos</label>
-      <textarea name="encaminhamentos" class="form-control" rows="3"></textarea>
+      <textarea name="encaminhamentos" class="form-control" rows="3"><?= htmlspecialchars($ataEdit['encaminhamentos'] ?? '') ?></textarea>
     </div>
 
     <h5 class="text-success mb-3 mt-3">Selecionar Participantes</h5>
     <div class="row g-4">
-      <!-- Alunos -->
-      <div class="col-md-4">
-        <h6 class="text-center text-success">Alunos</h6>
-        <input type="text" class="form-control form-control-sm mb-2" placeholder="Pesquisar aluno..." onkeyup="filtrar(this, 'aluno-lista')">
-        <div class="coluna-participantes" id="aluno-lista">
-          <?php while ($a = $alunos->fetch_assoc()): ?>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="participantes[]" value="<?= $a['idUSUARIO'] ?>">
-              <label class="form-check-label"><?= htmlspecialchars($a['nome']) ?></label>
-            </div>
-          <?php endwhile; ?>
-        </div>
-      </div>
+      <?php
+      function renderParticipantes($lista, $titulo, $idDiv, $selecionados = []) {
+          echo "<div class='col-md-4'>
+                  <h6 class='text-center text-success'>$titulo</h6>
+                  <input type='text' class='form-control form-control-sm mb-2' placeholder='Pesquisar...' onkeyup=\"filtrar(this, '$idDiv')\">
+                  <div class='coluna-participantes' id='$idDiv'>";
+          while ($p = $lista->fetch_assoc()) {
+              $checked = in_array($p['idUSUARIO'], $selecionados) ? 'checked' : '';
+              echo "<div class='form-check'>
+                      <input class='form-check-input' type='checkbox' name='participantes[]' value='{$p['idUSUARIO']}' $checked>
+                      <label class='form-check-label'>" . htmlspecialchars($p['nome']) . "</label>
+                    </div>";
+          }
+          echo "</div></div>";
+      }
 
-      <!-- Professores -->
-      <div class="col-md-4">
-        <h6 class="text-center text-success">Professores</h6>
-        <input type="text" class="form-control form-control-sm mb-2" placeholder="Pesquisar professor..." onkeyup="filtrar(this, 'prof-lista')">
-        <div class="coluna-participantes" id="prof-lista">
-          <?php while ($p = $professores->fetch_assoc()): ?>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="participantes[]" value="<?= $p['idUSUARIO'] ?>">
-              <label class="form-check-label"><?= htmlspecialchars($p['nome']) ?></label>
-            </div>
-          <?php endwhile; ?>
-        </div>
-      </div>
-
-      <!-- Servidores -->
-      <div class="col-md-4">
-        <h6 class="text-center text-success">Servidores</h6>
-        <input type="text" class="form-control form-control-sm mb-2" placeholder="Pesquisar servidor..." onkeyup="filtrar(this, 'serv-lista')">
-        <div class="coluna-participantes" id="serv-lista">
-          <?php while ($s = $servidores->fetch_assoc()): ?>
-            <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="participantes[]" value="<?= $s['idUSUARIO'] ?>">
-              <label class="form-check-label"><?= htmlspecialchars($s['nome']) ?></label>
-            </div>
-          <?php endwhile; ?>
-        </div>
-      </div>
+      renderParticipantes($alunos, "Alunos", "aluno-lista", $participantesEdit);
+      renderParticipantes($professores, "Professores", "prof-lista", $participantesEdit);
+      renderParticipantes($servidores, "Servidores", "serv-lista", $participantesEdit);
+      ?>
     </div>
 
     <div class="d-flex justify-content-end gap-3 mt-4">
       <a href="../DASHBOARD/dashboard.php" class="btn btn-secondary px-4">Voltar</a>
-      <button type="submit" class="btn btn-success px-4">Salvar ATA</button>
+      <?php if ($ataEdit): ?>
+        <a href="cadastrar_ata.php" class="btn btn-outline-secondary px-4">Cancelar edição</a>
+      <?php endif; ?>
+      <button type="submit" class="btn btn-success px-4">
+        <?= $ataEdit ? 'Atualizar ATA' : 'Salvar ATA' ?>
+      </button>
     </div>
   </form>
 
@@ -248,6 +244,9 @@ $result = $conn->query($sql_listar);
               <td><?= htmlspecialchars($ata['redator']); ?></td>
               <td><?= htmlspecialchars($ata['participantes'] ?: 'Nenhum'); ?></td>
               <td>
+                <a href="?editar=<?= $ata['idATA']; ?>" class="btn btn-sm btn-outline-primary me-1">
+                  <i class="bi bi-pencil"></i> Editar
+                </a>
                 <a href="?delete=<?= $ata['idATA']; ?>" class="btn btn-sm btn-outline-danger"
                    onclick="return confirm('Deseja excluir esta ATA?')">
                    <i class="bi bi-trash"></i> Excluir
@@ -263,20 +262,56 @@ $result = $conn->query($sql_listar);
   </div>
 </main>
 
-  <footer>
-    <p>© <?= date('Y') ?> SUDAE - Sistema Unificado da Assistência Estudantil</p>
-  </footer>
+<footer>
+  <p>© <?= date('Y') ?> SUDAE - Sistema Unificado da Assistência Estudantil</p>
+</footer>
+
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
 <script>
-  // Filtro de busca
-  function filtrar(input, listaId) {
-    const filtro = input.value.toLowerCase();
-    document.querySelectorAll(`#${listaId} .form-check`).forEach(item => {
-      const nome = item.textContent.toLowerCase();
-      item.style.display = nome.includes(filtro) ? '' : 'none';
-    });
-  }
+function filtrar(input, listaId) {
+  const filtro = input.value.toLowerCase();
+  document.querySelectorAll(`#${listaId} .form-check`).forEach(item => {
+    const nome = item.textContent.toLowerCase();
+    item.style.display = nome.includes(filtro) ? '' : 'none';
+  });
+}
 
+// Função para auto expandir textareas
+function autoExpandTextarea(textarea) {
+  textarea.style.height = 'auto'; // Reset
+  textarea.style.height = textarea.scrollHeight + 'px'; // Ajusta para o scrollHeight
+}
+
+// Seleciona todos os textareas que devem expandir
+document.querySelectorAll('.auto-expand').forEach(textarea => {
+  // Expande ao digitar
+  textarea.addEventListener('input', () => autoExpandTextarea(textarea));
+  
+  // Expande automaticamente se já tiver conteúdo
+  autoExpandTextarea(textarea);
+});
+
+  // Inicializar Quill
+  var quill = new Quill('#editor', {
+    theme: 'snow',
+    placeholder: 'Escreva aqui as anotações da ATA...',
+    modules: {
+      toolbar: [
+        [{ header: [1, 2, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ list: 'ordered'}, { list: 'bullet' }],
+        ['link', 'image'],
+        ['clean']
+      ]
+    }
+  });
+
+  // Enviar o conteúdo ao submeter o form
+  document.querySelector('form').addEventListener('submit', function(e) {
+    document.getElementById('anotacoes').value = quill.root.innerHTML;
+  });
 </script>
 
 </body>
