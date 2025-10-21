@@ -6,41 +6,42 @@ $mensagem = '';
 $sucesso = false;
 
 if (isset($_POST['login'])) {
-    $matricula = $_POST['matricula'];
-    $senhaDigitada = $_POST['senha']; // senha em texto puro
+  $matricula = $_POST['matricula'];
+  $senhaDigitada = $_POST['senha']; // senha em texto puro
 
-    // Busca usuário pelo número de matrícula
-    $sql = "SELECT * FROM usuario WHERE matricula='$matricula' LIMIT 1";
-    $res = $conexao->query($sql);
+  // Busca usuário pelo número de matrícula
+  $sql = "SELECT * FROM usuario WHERE matricula='$matricula' LIMIT 1";
+  $res = $conexao->query($sql);
 
-    if ($res->num_rows === 1) {
-        $usuario = $res->fetch_assoc();
+  if ($res->num_rows === 1) {
+    $usuario = $res->fetch_assoc();
 
-        // Verificação da senha com password_verify
-        if (password_verify($senhaDigitada, $usuario['senha'])) {
-            // Salva na sessão
-            $_SESSION['usuario'] = [
-                'idUSUARIO' => $usuario['idUSUARIO'],
-                'nome'      => $usuario['nome'],
-                'tipo'      => $usuario['tipo'],
-                'matricula' => $usuario['matricula']
-            ];
+    // Verificação da senha com password_verify
+    if (password_verify($senhaDigitada, $usuario['senha'])) {
+      // Salva na sessão
+      $_SESSION['usuario'] = [
+        'idUSUARIO' => $usuario['idUSUARIO'],
+        'nome' => $usuario['nome'],
+        'tipo' => $usuario['tipo'],
+        'matricula' => $usuario['matricula']
+      ];
 
-            $sucesso = true;
+      $sucesso = true;
 
-            header("Location: ../DASHBOARD/dashboard.php");
-            exit;
-        } else {
-            $mensagem = "Senha incorreta!";
-        }
+      header("Location: ../DASHBOARD/dashboard.php");
+      exit;
     } else {
-        $mensagem = "Usuário não encontrado!";
+      $mensagem = "Senha incorreta!";
     }
+  } else {
+    $mensagem = "Usuário não encontrado!";
+  }
 }
 ?>
 
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
   <meta charset="UTF-8">
   <title>Login - SUDAE</title>
@@ -68,7 +69,7 @@ if (isset($_POST['login'])) {
       background: #fff;
       padding: 2.5rem;
       border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
       width: 100%;
       max-width: 400px;
     }
@@ -119,59 +120,60 @@ if (isset($_POST['login'])) {
     }
   </style>
 </head>
+
 <body>
 
-<div class="login-container">
-  <div class="login-box">
-    <h3 class="text-center login-title">Login - SUDAE</h3>
+  <div class="login-container">
+    <div class="login-box">
+      <h3 class="text-center login-title">Login - SUDAE</h3>
 
-    <?php if ($mensagem): ?>
-      <div class="alert <?= $sucesso ? 'alert-success' : 'alert-danger' ?> text-center">
-        <?= $mensagem ?>
-      </div>
-    <?php endif; ?>
-
-    <?php if ($sucesso): ?>
-      <div class="text-center mt-3">
-        <a href="../DASHBOARD/dashboard.php" class="btn btn-success">Ir para o painel</a>
-      </div>
-    <?php else: ?>
-      <form method="POST">
-        <div class="mb-3">
-          <label for="matricula" class="form-label">Matrícula</label>
-          <input type="text" name="matricula" class="form-control" required>
+      <?php if ($mensagem): ?>
+        <div class="alert <?= $sucesso ? 'alert-success' : 'alert-danger' ?> text-center">
+          <?= $mensagem ?>
         </div>
+      <?php endif; ?>
 
-        <div class="mb-3">
-          <label for="senha" class="form-label">Senha</label>
-          <input type="password" name="senha" class="form-control" required
-                 pattern=".{8,}"
-                 title="A senha deve ter no mínimo 8 caracteres.">
+      <?php if ($sucesso): ?>
+        <div class="text-center mt-3">
+          <a href="../DASHBOARD/dashboard.php" class="btn btn-success">Ir para o painel</a>
         </div>
+      <?php else: ?>
+        <form method="POST">
+          <div class="mb-3">
+            <label for="matricula" class="form-label">Matrícula</label>
+            <input type="text" name="matricula" class="form-control" required>
+          </div>
 
-        <div class="d-grid mb-3">
-          <button type="submit" name="login" class="btn btn-login text-white">Entrar</button>
+          <div class="mb-3">
+            <label for="senha" class="form-label">Senha</label>
+            <input type="password" name="senha" class="form-control" required pattern=".{8,}"
+              title="A senha deve ter no mínimo 8 caracteres.">
+          </div>
+
+          <div class="d-grid mb-3">
+            <button type="submit" name="login" class="btn btn-login text-white">Entrar</button>
+          </div>
+        </form>
+
+        <div class="login-links text-center">
+          <span class="text-muted d-block mb-2">
+            Para criar uma conta, procure a <strong>Assistência Estudantil</strong>.
+          </span>
+          <a href="esqueceu.php">Esqueci minha senha</a>
         </div>
-      </form>
+      <?php endif; ?>
+    </div>
 
-      <div class="login-links text-center">
-        <span class="text-muted d-block mb-2">
-          Para criar uma conta, procure a <strong>Assistência Estudantil</strong>.
-        </span>
-        <a href="esqueceu.php">Esqueci minha senha</a>
-      </div>
-    <?php endif; ?>
+    <img src="../assets/img/SUDAE.svg" alt="Logo SUDAE" class="logo">
+
+    <footer>
+      <p>© <?= date('Y') ?> SUDAE - Sistema Unificado da Assistência Estudantil</p>
+    </footer>
   </div>
 
-  <img src="../assets/img/SUDAE.svg" alt="Logo SUDAE" class="logo">
-
-  <footer>
-  <p>© <?= date('Y') ?> SUDAE - Sistema Unificado da Assistência Estudantil</p>
-</footer>
-</div>
 
 
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

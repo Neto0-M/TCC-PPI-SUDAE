@@ -15,7 +15,8 @@ if (isset($_GET['acao']) && $_GET['acao'] === 'buscar_aluno') {
         $stmt->bind_param("s", $matricula);
         $stmt->execute();
         $stmt->bind_result($nome);
-        if ($stmt->fetch()) $response['nome'] = $nome;
+        if ($stmt->fetch())
+            $response['nome'] = $nome;
         $stmt->close();
     }
 
@@ -30,7 +31,8 @@ $idProfessor = intval($_POST['idProfessor'] ?? 0);
 $motivo = trim($_POST['motivo'] ?? '');
 $obs = trim($_POST['observacao'] ?? '');
 
-if (!$matricula || !$idProfessor || !$motivo) die("Preencha todos os campos obrigatórios.");
+if (!$matricula || !$idProfessor || !$motivo)
+    die("Preencha todos os campos obrigatórios.");
 
 // Busca aluno
 $stmt = $conexao->prepare("SELECT idUSUARIO, nome FROM USUARIO WHERE matricula = ?");
@@ -39,7 +41,8 @@ $stmt->execute();
 $aluno = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
-if (!$aluno) die("Aluno não encontrado.");
+if (!$aluno)
+    die("Aluno não encontrado.");
 
 $idAluno = $aluno['idUSUARIO'];
 $data = date('Y-m-d H:i:s');
