@@ -70,6 +70,7 @@ if (isset($_POST['cadastrar'])) {
     body {
       background-color: #e6f4ec;
       font-family: 'Segoe UI', sans-serif;
+      padding-bottom: 60px;
     }
 
     .logo {
@@ -148,12 +149,15 @@ if (isset($_POST['cadastrar'])) {
     }
 
     footer {
-      position: absolute;
+      background-color: #fff;
+      position: fixed;
+      bottom: 0;
+      left: 0;
       width: 100%;
       text-align: center;
       color: #666;
       font-size: 0.9rem;
-      padding-bottom: 5px;
+      padding: 5px 0;
     }
   </style>
 </head>

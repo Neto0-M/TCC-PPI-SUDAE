@@ -67,6 +67,7 @@ $qrcode = "https://quickchart.io/qr?text=" . urlencode($matricula);
       font-family: 'Segoe UI', sans-serif;
       position: relative;
       min-height: 100vh;
+      padding-bottom: 60px;
     }
 
     .logo {
@@ -120,13 +121,15 @@ $qrcode = "https://quickchart.io/qr?text=" . urlencode($matricula);
     }
 
     footer {
-      position: absolute;
+      background-color: #fff;
+      position: fixed;
+      bottom: 0;
+      left: 0;
       width: 100%;
       text-align: center;
       color: #666;
       font-size: 0.9rem;
-      padding-top: 5px;
-      padding-bottom: 5px;
+      padding: 5px 0;
     }
   </style>
 </head>

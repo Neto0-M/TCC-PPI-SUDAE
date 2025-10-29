@@ -49,8 +49,8 @@ $data = date('Y-m-d H:i:s');
 $motivoCompleto = $motivo . ($obs ? " - " . $obs : '');
 
 // Inserir no banco
-$stmt = $conexao->prepare("INSERT INTO ATRASO (idAluno, idServidor, data, notificado, motivo) VALUES (?, ?, ?, 'N', ?)");
-$stmt->bind_param("iiss", $idAluno, $idServidor, $data, $motivoCompleto);
+$stmt = $conexao->prepare("INSERT INTO ATRASO (idAluno, idServidor, idProfessor, data, notificado, motivo) VALUES (?, ?, ?, ?, 'N', ?)");
+$stmt->bind_param("iiiss", $idAluno, $idServidor, $idProfessor, $data, $motivoCompleto);
 $stmt->execute();
 $stmt->close();
 

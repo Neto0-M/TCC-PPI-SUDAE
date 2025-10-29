@@ -62,6 +62,7 @@ if ($result) {
     }
 
     footer {
+      background-color: #fff;
       position: fixed;
       bottom: 0;
       left: 0;
@@ -69,7 +70,7 @@ if ($result) {
       text-align: center;
       color: #666;
       font-size: 0.9rem;
-      padding: 10px 0;
+      padding: 5px 0;
     }
 
     .fade-in {

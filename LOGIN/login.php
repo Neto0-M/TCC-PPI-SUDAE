@@ -110,13 +110,15 @@ if (isset($_POST['login'])) {
     }
 
     footer {
-      position: absolute;
-      bottom: 2px;
+      background-color: #fff;
+      position: fixed;
+      bottom: 0;
+      left: 0;
       width: 100%;
       text-align: center;
       color: #666;
       font-size: 0.9rem;
-      padding-bottom: 5px;
+      padding: 5px 0;
     }
   </style>
 </head>

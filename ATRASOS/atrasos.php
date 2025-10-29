@@ -111,6 +111,7 @@ if (isset($_GET['edit'])) {
         body {
             background-color: #e6f4ec;
             font-family: 'Segoe UI', sans-serif;
+            padding-bottom: 60px;
         }
 
         .logo {
@@ -174,11 +175,15 @@ if (isset($_GET['edit'])) {
         }
 
         footer {
+            background-color: #fff;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
             text-align: center;
             color: #666;
             font-size: 0.9rem;
-            margin-top: 40px;
-            padding: 10px 0;
+            padding: 5px 0;
         }
     </style>
 </head>
