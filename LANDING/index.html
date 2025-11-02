@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <title>SUDAE — Sistema Unificado da Assistência Estudantil</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      background-color: #e6f4ec;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    main {
+      flex: 1;
+      margin-top: 40px;
+    }
+
+    header {
+      background-color: #fff;
+      padding: 15px 40px;
+      border-bottom: 2px solid #dceee2;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      position: relative;
+    }
+
+    .logo {
+      position: absolute;
+      left: 25px;
+      width: 50px;
+      height: auto;
+    }
+
+    header h1 {
+      position: absolute;
+      left: 140px;
+      font-size: 1.2rem;
+      color: #198754;
+      font-weight: bold;
+      margin: 0;
+    }
+
+    nav a {
+      margin-left: 12px;
+    }
+
+    .img-btn {
+      width: 24px;
+      padding-bottom: 3px;
+    }
+
+    .hero {
+      background-image: url('https://images.unsplash.com/photo-1588072432836-e10032774350?auto=format&fit=crop&w=1600&q=80');
+      background-size: cover;
+      background-position: center;
+      color: white;
+      padding: 120px 10%;
+      text-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+      border-radius: 0 0 15px 15px;
+    }
+
+    .hero h2 {
+      font-size: 2.3rem;
+      font-weight: 700;
+    }
+
+    .hero p {
+      font-size: 1.1rem;
+      max-width: 650px;
+    }
+
+    .btn-success-custom {
+      color: #fff;
+      background-color: #198754;
+      border: none;
+      font-weight: 600;
+      padding: 10px 22px;
+    }
+
+    .btn-success-custom:hover {
+      background-color: #157347;
+    }
+
+    .card {
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+      background: #fff;
+      padding: 25px;
+      margin-bottom: 25px;
+    }
+
+    .card h3 {
+      color: #198754;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    .feature {
+      background-color: #f5fdf8;
+      border: 1px solid #dceee2;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      transition: 0.2s;
+    }
+
+    .feature:hover {
+      background-color: #ecf9f1;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.08);
+    }
+
+    footer {
+      background-color: #fff;
+      border-top: 2px solid #dceee2;
+      text-align: center;
+      padding: 15px;
+      color: #666;
+      font-size: 0.9rem;
+      margin-top: auto;
+    }
+
+    footer .small {
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    @media (max-width: 768px) {
+      header {
+        padding: 10px 20px;
+      }
+
+      header h1 {
+        left: 90px;
+        font-size: 1rem;
+      }
+
+      .hero {
+        padding: 80px 6%;
+      }
+
+      .hero h2 {
+        font-size: 1.6rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <img src="../assets/img/SUDAE.svg" alt="Logo SUDAE" class="logo">
+    <h1>Sistema Unificado da Assistência Estudantil</h1>
+    <nav>
+      <a href="../LOGIN/login.php" class="btn btn-success btn-sm">Login</a>
+    </nav>
+  </header>
+
+  <section class="hero text-white">
+    <h2>Transformando a gestão da Assistência Estudantil no IFFar</h2>
+    <p class="mt-3">
+      Digitalize atas, automatize o registro de atrasos por QR Code e ofereça acesso transparente e seguro
+      para servidores, professores e alunos — alinhado ao ODS 4 (Educação de Qualidade).
+    </p>
+    <a href="../LOGIN/login.php" class="btn btn-success-custom mt-4">Acessar Sistema</a>
+  </section>
+
+  <main class="container">
+    <section id="sobre" class="card">
+      <h3>Sobre o Projeto</h3>
+      <p>
+        O SUDAE (Sistema Unificado da Assistência Estudantil) nasceu como projeto da Prática Profissional Integrada
+        (PPI)
+        do curso Técnico em Informática do IFFar — Campus São Borja. O objetivo é centralizar registros de atas da CAE e
+        automatizar o controle de atrasos estudantis, facilitando acompanhamento e tomada de decisão.
+      </p>
+    </section>
+
+    <section id="funcionalidades" class="card">
+      <h3>Funcionalidades</h3>
+      <div class="row g-3 mt-2">
+        <div class="col-md-3 col-sm-6">
+          <div class="feature">
+            <img src="../assets/img/ata_verde.svg" class="img-btn">
+            <h5> Registro de Atas</h5>
+            <p>CRUD de atas com histórico, busca por data e exportação em PDF.</p>
+          </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+          <div class="feature">
+            <img src="../assets/img/atraso_verde.svg" class="img-btn">
+            <h5> Controle de Atrasos</h5>
+            <p>Registros via QR Code e notificações automáticas para professores.</p>
+          </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+          <div class="feature">
+            <img src="../assets/img/participantes.svg" class="img-btn">
+            <h5> Perfis Multiusuário</h5>
+            <p>Perfis para Servidor, Professor e Aluno com permissões específicas.</p>
+          </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+          <div class="feature">
+            <h5>🌱 Sustentabilidade</h5>
+            <p>Redução do uso de papel e alinhamento ao ODS 4 (Educação de Qualidade).</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Equipe & Metodologia</h3>
+      <p>
+        Desenvolvido como parte da PPI do Técnico em Informática — levantamento de requisitos, modelagem,
+        prototipação e implementação com HTML, CSS, JavaScript, PHP e MySQL. Projeto guiado por boas práticas de UX e
+        acessibilidade.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 SUDAE — Sistema Unificado da Assistência Estudantil</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
