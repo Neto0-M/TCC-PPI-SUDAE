@@ -13,7 +13,7 @@ if ($res)
     while ($r = $res->fetch_assoc())
         $professores[] = $r;
 
-// === BUSCAR ALUNO POR MATRÍCULA (para AJAX interno) ===
+// === BUSCAR ALUNO POR MATRÍCULA ===
 if (isset($_GET['buscar_aluno'])) {
     $matricula = $_GET['buscar_aluno'];
     $stmt = $conexao->prepare("SELECT nome FROM USUARIO WHERE matricula = ?");
@@ -49,16 +49,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $motivo .= " - " . $motivo_extra;
 
     // Buscar aluno pelo número de matrícula
-    $stmt = $conexao->prepare("SELECT idUSUARIO FROM USUARIO WHERE matricula = ?");
+    $stmt = $conexao->prepare("SELECT idUSUARIO FROM USUARIO WHERE matricula = ? AND tipo = 3");
     $stmt->bind_param("s", $matricula);
     $stmt->execute();
     $aluno = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
     if (!$aluno)
-        die("Aluno não encontrado.");
-    $idAluno = $aluno['idUSUARIO'];
-    $idServidor = 1; // Simulação de usuário logado
+        die("<div class='alert alert-danger text-center'>Aluno não encontrado!</div>");
 
     if ($id > 0) {
         $stmt = $conexao->prepare("UPDATE ATRASO SET idAluno = ?, idServidor = ?, idProfessor = ?, data = ?, motivo = ?, notificado = 'N' WHERE idATRASO = ?");
