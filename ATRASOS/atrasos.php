@@ -1,4 +1,5 @@
 <?php
+session_start();
 include '../conexao.php';
 
 function data_br($data)
@@ -38,12 +39,18 @@ if ($res)
 
 // === FORMULÁRIO - SUBMISSÃO ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Garante que a sessão está ativa
+    if (!isset($_SESSION['usuario']['idUSUARIO'])) {
+        die("<div class='alert alert-danger text-center'>Você precisa estar logado!</div>");
+    }
+
+    $idServidor = $_SESSION['usuario']['idUSUARIO'];
     $id = $_POST['id'] ?? 0;
-    $matricula = $_POST['matricula'];
+    $matricula = trim($_POST['matricula']);
     $data = $_POST['data'];
     $motivo = $_POST['motivo'];
     $motivo_extra = trim($_POST['motivo_extra']);
-    $idProfessor = $_POST['idProfessor'];
+    $idProfessor = $_POST['idProfessor'] ?? null;
 
     if ($motivo_extra)
         $motivo .= " - " . $motivo_extra;
@@ -58,19 +65,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$aluno)
         die("<div class='alert alert-danger text-center'>Aluno não encontrado!</div>");
 
+    $idAluno = $aluno['idUSUARIO'];
+
+    // Inserir ou atualizar
     if ($id > 0) {
-        $stmt = $conexao->prepare("UPDATE ATRASO SET idAluno = ?, idServidor = ?, idProfessor = ?, data = ?, motivo = ?, notificado = 'N' WHERE idATRASO = ?");
+        $stmt = $conexao->prepare("
+            UPDATE ATRASO 
+            SET idAluno = ?, idServidor = ?, idProfessor = ?, data = ?, motivo = ?, notificado = 'N' 
+            WHERE idATRASO = ?
+        ");
         $stmt->bind_param("iiissi", $idAluno, $idServidor, $idProfessor, $data, $motivo, $id);
     } else {
-        $stmt = $conexao->prepare("INSERT INTO ATRASO (idAluno, idServidor, idProfessor, data, motivo, notificado) VALUES (?, ?, ?, ?, ?, 'N')");
+        $stmt = $conexao->prepare("
+            INSERT INTO ATRASO (idAluno, idServidor, idProfessor, data, motivo, notificado) 
+            VALUES (?, ?, ?, ?, ?, 'N')
+        ");
         $stmt->bind_param("iiiss", $idAluno, $idServidor, $idProfessor, $data, $motivo);
     }
 
     $stmt->execute();
     $stmt->close();
+
     header("Location: atrasos.php");
     exit;
 }
+
 
 // === EXCLUSÃO ===
 if (isset($_GET['delete'])) {
@@ -109,7 +128,7 @@ if (isset($_GET['edit'])) {
         body {
             background-color: #e6f4ec;
             font-family: 'Segoe UI', sans-serif;
-            padding-bottom: 60px;
+            padding-bottom: 100px;
         }
 
         .logo {
@@ -173,15 +192,19 @@ if (isset($_GET['edit'])) {
         }
 
         footer {
-            background-color: #fff;
+            background-color: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(8px);
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
             text-align: center;
-            color: #666;
+            color: #555;
             font-size: 0.9rem;
-            padding: 5px 0;
+            padding: 10px 0;
+            border-top: 2px solid #dceee2;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+            z-index: 9999;
         }
     </style>
 </head>
@@ -272,6 +295,22 @@ if (isset($_GET['edit'])) {
 
         <div class="card mt-5 p-4">
             <h4 class="fw-bold text-success mb-3">Atrasos Registrados</h4>
+            <div class="mb-3 row g-2 align-items-center">
+                <div class="col-md-4">
+                    <input type="text" id="buscarTextoAtrasos" class="form-control"
+                        placeholder="Buscar por matrícula, aluno, professor ou motivo...">
+                </div>
+                <div class="col-md-3">
+                    <input type="date" id="buscarDataInicioAtrasos" class="form-control" placeholder="Data inicial">
+                </div>
+                <div class="col-md-3">
+                    <input type="date" id="buscarDataFimAtrasos" class="form-control" placeholder="Data final">
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-success w-100" id="limparFiltrosAtrasos">Limpar
+                        filtros</button>
+                </div>
+            </div>
             <table class="table table-hover table-bordered align-middle">
                 <thead class="table-light">
                     <tr>
@@ -313,6 +352,46 @@ if (isset($_GET['edit'])) {
     </footer>
 
     <script>
+        const inputTextoAtrasos = document.getElementById('buscarTextoAtrasos');
+        const inputDataInicioAtrasos = document.getElementById('buscarDataInicioAtrasos');
+        const inputDataFimAtrasos = document.getElementById('buscarDataFimAtrasos');
+        const btnLimparAtrasos = document.getElementById('limparFiltrosAtrasos');
+
+        function filtrarAtrasos() {
+            const textoFiltro = inputTextoAtrasos.value.toLowerCase();
+            const dataInicio = inputDataInicioAtrasos.value ? new Date(inputDataInicioAtrasos.value) : null;
+            const dataFim = inputDataFimAtrasos.value ? new Date(inputDataFimAtrasos.value) : null;
+
+            document.querySelectorAll('table tbody tr').forEach(row => {
+                const dataRow = new Date(row.cells[0].textContent.split(' ')[0].split('/').reverse().join('-'));
+                const matricula = row.cells[1].textContent.toLowerCase();
+                const aluno = row.cells[2].textContent.toLowerCase();
+                const professor = row.cells[3].textContent.toLowerCase();
+                const motivo = row.cells[4].textContent.toLowerCase();
+
+                let textoOk = matricula.includes(textoFiltro) || aluno.includes(textoFiltro) ||
+                    professor.includes(textoFiltro) || motivo.includes(textoFiltro);
+
+                let dataOk = true;
+                if (dataInicio && dataRow < dataInicio) dataOk = false;
+                if (dataFim && dataRow > dataFim) dataOk = false;
+
+                row.style.display = (textoOk && dataOk) ? '' : 'none';
+            });
+        }
+
+        inputTextoAtrasos.addEventListener('keyup', filtrarAtrasos);
+        inputDataInicioAtrasos.addEventListener('change', filtrarAtrasos);
+        inputDataFimAtrasos.addEventListener('change', filtrarAtrasos);
+
+        btnLimparAtrasos.addEventListener('click', () => {
+            inputTextoAtrasos.value = '';
+            inputDataInicioAtrasos.value = '';
+            inputDataFimAtrasos.value = '';
+            filtrarAtrasos();
+        });
+
+
         document.getElementById('matricula').addEventListener('blur', function () {
             const matricula = this.value.trim();
             const nomeAluno = document.getElementById('nomeAluno');

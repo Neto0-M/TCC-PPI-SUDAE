@@ -149,15 +149,19 @@ if (isset($_POST['cadastrar'])) {
     }
 
     footer {
-      background-color: #fff;
+      background-color: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(8px);
       position: fixed;
       bottom: 0;
       left: 0;
       width: 100%;
       text-align: center;
-      color: #666;
+      color: #555;
       font-size: 0.9rem;
-      padding: 5px 0;
+      padding: 10px 0;
+      border-top: 2px solid #dceee2;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+      z-index: 9999;
     }
   </style>
 </head>

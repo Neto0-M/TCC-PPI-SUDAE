@@ -24,6 +24,7 @@
     main {
       flex: 1;
       margin-top: 40px;
+      padding-bottom: 80px;
     }
 
     header {
@@ -128,13 +129,19 @@
     }
 
     footer {
-      background-color: #fff;
-      border-top: 2px solid #dceee2;
+      background-color: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(8px);
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
       text-align: center;
-      padding: 15px;
-      color: #666;
+      color: #555;
       font-size: 0.9rem;
-      margin-top: auto;
+      padding: 10px 0;
+      border-top: 2px solid #dceee2;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+      z-index: 9999;
     }
 
     footer .small {
@@ -177,7 +184,7 @@
     <h2>Transformando a gestão da Assistência Estudantil no IFFar</h2>
     <p class="mt-3">
       Digitalize atas, automatize o registro de atrasos por QR Code e ofereça acesso transparente e seguro
-      para servidores, professores e alunos — alinhado ao ODS 4 (Educação de Qualidade).
+      para servidores, professores e alunos. Alinhado ao ODS 4 (Educação de Qualidade).
     </p>
     <a href="../LOGIN/login.php" class="btn btn-success-custom mt-4">Acessar Sistema</a>
   </section>
@@ -230,7 +237,7 @@
     <section class="card">
       <h3>Equipe & Metodologia</h3>
       <p>
-        Desenvolvido como parte da PPI do Técnico em Informática — levantamento de requisitos, modelagem,
+        Desenvolvido como parte da PPI do Técnico em Informática. Levantamento de requisitos, modelagem,
         prototipação e implementação com HTML, CSS, JavaScript, PHP e MySQL. Projeto guiado por boas práticas de UX e
         acessibilidade.
       </p>

@@ -4,8 +4,8 @@ session_start();
 
 // Verifica login
 if (!isset($_SESSION['usuario'])) {
-    header("Location: ../LOGIN/login.php");
-    exit;
+  header("Location: ../LOGIN/login.php");
+  exit;
 }
 
 $idRedator = $_SESSION['usuario']['idUSUARIO'];
@@ -17,100 +17,100 @@ $participantesEdit = [];
 
 // ====== Buscar dados para edição ======
 if (isset($_GET['editar'])) {
-    $idEditar = intval($_GET['editar']);
+  $idEditar = intval($_GET['editar']);
 
-    $sql = "SELECT * FROM ATA WHERE idATA = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $idEditar);
-    $stmt->execute();
-    $ataEdit = $stmt->get_result()->fetch_assoc();
+  $sql = "SELECT * FROM ATA WHERE idATA = ?";
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param("i", $idEditar);
+  $stmt->execute();
+  $ataEdit = $stmt->get_result()->fetch_assoc();
 
-    if ($ataEdit) {
-        $sql_part = "SELECT idUSUARIO FROM PARTICIPANTES WHERE idAta = ?";
-        $stmt_part = $conn->prepare($sql_part);
-        $stmt_part->bind_param("i", $idEditar);
-        $stmt_part->execute();
-        $res_part = $stmt_part->get_result();
-        while ($row = $res_part->fetch_assoc()) {
-            $participantesEdit[] = $row['idUSUARIO'];
-        }
+  if ($ataEdit) {
+    $sql_part = "SELECT idUSUARIO FROM PARTICIPANTES WHERE idAta = ?";
+    $stmt_part = $conn->prepare($sql_part);
+    $stmt_part->bind_param("i", $idEditar);
+    $stmt_part->execute();
+    $res_part = $stmt_part->get_result();
+    while ($row = $res_part->fetch_assoc()) {
+      $participantesEdit[] = $row['idUSUARIO'];
     }
+  }
 }
 
 // ====== Bloquear envio se for visualização ======
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $modoVisualizacao) {
-    die("<div class='alert alert-danger text-center mt-3'>Você não tem permissão para alterar esta ATA.</div>");
+  die("<div class='alert alert-danger text-center mt-3'>Você não tem permissão para alterar esta ATA.</div>");
 }
 
 // ====== Cadastrar nova ou editar ======
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $acao = $_POST['acao'] ?? '';
-    $data = date("Y-m-d H:i:s", strtotime($_POST['data']));
-    $assunto = trim($_POST['assunto']);
-    $anotacoes = $_POST['anotacoes'];
-    $encaminhamentos = $_POST['encaminhamentos'];
-    $participantes = $_POST['participantes'] ?? [];
+  $acao = $_POST['acao'] ?? '';
+  $data = date("Y-m-d H:i:s", strtotime($_POST['data']));
+  $assunto = trim($_POST['assunto']);
+  $anotacoes = $_POST['anotacoes'];
+  $encaminhamentos = $_POST['encaminhamentos'];
+  $participantes = $_POST['participantes'] ?? [];
 
-    if ($acao === 'cadastrar') {
-        $sql = "INSERT INTO ATA (data, assunto, anotacoes, encaminhamentos, idRedator)
+  if ($acao === 'cadastrar') {
+    $sql = "INSERT INTO ATA (data, assunto, anotacoes, encaminhamentos, idRedator)
                 VALUES (?, ?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssssi", $data, $assunto, $anotacoes, $encaminhamentos, $idRedator);
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ssssi", $data, $assunto, $anotacoes, $encaminhamentos, $idRedator);
 
-        if ($stmt->execute()) {
-            $idAta = $stmt->insert_id;
+    if ($stmt->execute()) {
+      $idAta = $stmt->insert_id;
 
-            if (!empty($participantes)) {
-                $sql_part = "INSERT INTO PARTICIPANTES (idAta, idUSUARIO, dataRegistro, assinatura) VALUES (?, ?, NOW(), 'N')";
-                $stmt_part = $conn->prepare($sql_part);
+      if (!empty($participantes)) {
+        $sql_part = "INSERT INTO PARTICIPANTES (idAta, idUSUARIO, dataRegistro, assinatura) VALUES (?, ?, NOW(), 'N')";
+        $stmt_part = $conn->prepare($sql_part);
 
-                foreach ($participantes as $idUsuario) {
-                    $stmt_part->bind_param("ii", $idAta, $idUsuario);
-                    $stmt_part->execute();
-                }
-            }
-
-            $msg = "<div class='alert alert-success'>ATA cadastrada com sucesso!</div>";
-        } else {
-            $msg = "<div class='alert alert-danger'>Erro ao cadastrar ATA: " . $conn->error . "</div>";
+        foreach ($participantes as $idUsuario) {
+          $stmt_part->bind_param("ii", $idAta, $idUsuario);
+          $stmt_part->execute();
         }
+      }
+
+      $msg = "<div class='alert alert-success'>ATA cadastrada com sucesso!</div>";
+    } else {
+      $msg = "<div class='alert alert-danger'>Erro ao cadastrar ATA: " . $conn->error . "</div>";
     }
+  }
 
-    if ($acao === 'editar' && isset($_POST['idATA'])) {
-        $idATA = intval($_POST['idATA']);
-        $sql = "UPDATE ATA SET data=?, assunto=?, anotacoes=?, encaminhamentos=? WHERE idATA=?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssssi", $data, $assunto, $anotacoes, $encaminhamentos, $idATA);
+  if ($acao === 'editar' && isset($_POST['idATA'])) {
+    $idATA = intval($_POST['idATA']);
+    $sql = "UPDATE ATA SET data=?, assunto=?, anotacoes=?, encaminhamentos=? WHERE idATA=?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ssssi", $data, $assunto, $anotacoes, $encaminhamentos, $idATA);
 
-        if ($stmt->execute()) {
-            // Apaga participantes antigos
-            $stmt_del = $conn->prepare("DELETE FROM PARTICIPANTES WHERE idAta = ?");
-            $stmt_del->bind_param("i", $idATA);
-            $stmt_del->execute();
+    if ($stmt->execute()) {
+      // Apaga participantes antigos
+      $stmt_del = $conn->prepare("DELETE FROM PARTICIPANTES WHERE idAta = ?");
+      $stmt_del->bind_param("i", $idATA);
+      $stmt_del->execute();
 
-            if (!empty($participantes)) {
-                $sql_part = "INSERT INTO PARTICIPANTES (idAta, idUSUARIO, dataRegistro, assinatura) VALUES (?, ?, NOW(), 'N')";
-                $stmt_part = $conn->prepare($sql_part);
+      if (!empty($participantes)) {
+        $sql_part = "INSERT INTO PARTICIPANTES (idAta, idUSUARIO, dataRegistro, assinatura) VALUES (?, ?, NOW(), 'N')";
+        $stmt_part = $conn->prepare($sql_part);
 
-                foreach ($participantes as $idUsuario) {
-                    $stmt_part->bind_param("ii", $idATA, $idUsuario);
-                    $stmt_part->execute();
-                }
-            }
-
-            $msg = "<div class='alert alert-success'>ATA atualizada com sucesso!</div>";
-        } else {
-            $msg = "<div class='alert alert-danger'>Erro ao atualizar ATA: " . $conn->error . "</div>";
+        foreach ($participantes as $idUsuario) {
+          $stmt_part->bind_param("ii", $idATA, $idUsuario);
+          $stmt_part->execute();
         }
+      }
+
+      $msg = "<div class='alert alert-success'>ATA atualizada com sucesso!</div>";
+    } else {
+      $msg = "<div class='alert alert-danger'>Erro ao atualizar ATA: " . $conn->error . "</div>";
     }
+  }
 }
 
 // ====== Excluir ATA ======
 if (isset($_GET['delete']) && !$modoVisualizacao) {
-    $idATA = intval($_GET['delete']);
-    $stmt = $conn->prepare("DELETE FROM ATA WHERE idATA=?");
-    $stmt->bind_param("i", $idATA);
-    $stmt->execute();
+  $idATA = intval($_GET['delete']);
+  $stmt = $conn->prepare("DELETE FROM ATA WHERE idATA=?");
+  $stmt->bind_param("i", $idATA);
+  $stmt->execute();
 }
 
 // ====== Buscar participantes ======
@@ -191,15 +191,19 @@ $result = $conn->query($sql_listar);
     }
 
     footer {
-    background-color: #fff;
+      background-color: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(8px);
       position: fixed;
       bottom: 0;
       left: 0;
       width: 100%;
       text-align: center;
-      color: #666;
+      color: #555;
       font-size: 0.9rem;
-      padding: 5px 0;
+      padding: 10px 0;
+      border-top: 2px solid #dceee2;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+      z-index: 9999;
     }
   </style>
 </head>
@@ -297,45 +301,63 @@ $result = $conn->query($sql_listar);
       </div>
     </form>
 
+    <?php if ($tipoUsuario == 1): ?>
     <div class="card mt-5 p-4">
-    <h4 class="fw-bold text-success mb-3">ATAs Registradas</h4>
-    <table class="table table-hover table-bordered align-middle">
+      <h4 class="fw-bold text-success mb-3">ATAs Registradas</h4>
+      <div class="mb-3 row g-2 align-items-center">
+        <div class="col-md-4">
+          <input type="text" id="buscarTexto" class="form-control"
+            placeholder="Buscar por assunto, redator ou participante...">
+        </div>
+        <div class="col-md-3">
+          <input type="date" id="buscarDataInicio" class="form-control" placeholder="Data inicial">
+        </div>
+        <div class="col-md-3">
+          <input type="date" id="buscarDataFim" class="form-control" placeholder="Data final">
+        </div>
+        <div class="col-md-2">
+          <button type="button" class="btn btn-success w-100" id="limparFiltros">Limpar filtros</button>
+        </div>
+      </div>
+      <table class="table table-hover table-bordered align-middle">
         <thead class="table-light">
-            <tr>
-                <th>Data</th>
-                <th>Assunto</th>
-                <th>Redator</th>
-                <th>Participantes</th>
-                <th class="text-center">Ações</th>
-            </tr>
+          <tr>
+            <th>Data</th>
+            <th>Assunto</th>
+            <th>Redator</th>
+            <th>Participantes</th>
+            <th class="text-center">Ações</th>
+          </tr>
         </thead>
         <tbody>
-            <?php if ($result && $result->num_rows > 0): ?>
-                <?php while ($ata = $result->fetch_assoc()): ?>
-                    <tr>
-                        <td><?= date('d/m/Y H:i', strtotime($ata['data'])) ?></td>
-                        <td><?= htmlspecialchars($ata['assunto']) ?></td>
-                        <td><?= htmlspecialchars($ata['redator']) ?></td>
-                        <td><?= htmlspecialchars($ata['participantes'] ?: '-') ?></td>
-                        <td class="text-center">
-                            <?php if (!$modoVisualizacao): ?>
-                                <a href="?editar=<?= $ata['idATA'] ?>" class="btn btn-sm btn-outline-primary">Editar</a>
-                                <a href="?delete=<?= $ata['idATA'] ?>" class="btn btn-sm btn-outline-danger"
-                                   onclick="return confirm('Excluir esta ATA?')">Excluir</a>
-                            <?php else: ?>
-                                <span class="text-muted">Sem ações</span>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                <?php endwhile; ?>
-            <?php else: ?>
-                <tr>
-                    <td colspan="5" class="text-center text-muted">Nenhuma ATA registrada.</td>
-                </tr>
-            <?php endif; ?>
+          <?php if ($result && $result->num_rows > 0): ?>
+            <?php while ($ata = $result->fetch_assoc()): ?>
+              <tr>
+                <td><?= date('d/m/Y H:i', strtotime($ata['data'])) ?></td>
+                <td><?= htmlspecialchars($ata['assunto']) ?></td>
+                <td><?= htmlspecialchars($ata['redator']) ?></td>
+                <td><?= htmlspecialchars($ata['participantes'] ?: '-') ?></td>
+                <td class="text-center">
+                  
+                  <?php if (!$modoVisualizacao): ?>
+                    <a href="?editar=<?= $ata['idATA'] ?>" class="btn btn-sm btn-outline-primary">Editar</a>
+                    <a href="?delete=<?= $ata['idATA'] ?>" class="btn btn-sm btn-outline-danger"
+                      onclick="return confirm('Excluir esta ATA?')">Excluir</a>
+                  <?php else: ?>
+                    <span class="text-muted">Sem ações</span>
+                  <?php endif; ?>
+                </td>
+              </tr>
+            <?php endwhile; ?>
+          <?php else: ?>
+            <tr>
+              <td colspan="5" class="text-center text-muted">Nenhuma ATA registrada.</td>
+            </tr>
+          <?php endif; ?>
         </tbody>
-    </table>
-</div>
+      </table>
+    </div>
+    <?php endif; ?>
 
     <footer>
       <p>© <?= date('Y') ?> SUDAE - Sistema Unificado da Assistência Estudantil</p>
@@ -350,6 +372,43 @@ $result = $conn->query($sql_listar);
           item.style.display = nome.includes(filtro) ? '' : 'none';
         });
       }
+
+      const inputTexto = document.getElementById('buscarTexto');
+      const inputDataInicio = document.getElementById('buscarDataInicio');
+      const inputDataFim = document.getElementById('buscarDataFim');
+      const btnLimpar = document.getElementById('limparFiltros');
+
+      function filtrarATAs() {
+        const textoFiltro = inputTexto.value.toLowerCase();
+        const dataInicio = inputDataInicio.value ? new Date(inputDataInicio.value) : null;
+        const dataFim = inputDataFim.value ? new Date(inputDataFim.value) : null;
+
+        document.querySelectorAll('table tbody tr').forEach(row => {
+          const assunto = row.cells[1].textContent.toLowerCase();
+          const redator = row.cells[2].textContent.toLowerCase();
+          const participantes = row.cells[3].textContent.toLowerCase();
+          const dataRow = new Date(row.cells[0].textContent.split(' ')[0].split('/').reverse().join('-')); // converte dd/mm/yyyy
+
+          let textoOk = assunto.includes(textoFiltro) || redator.includes(textoFiltro) || participantes.includes(textoFiltro);
+          let dataOk = true;
+
+          if (dataInicio && dataRow < dataInicio) dataOk = false;
+          if (dataFim && dataRow > dataFim) dataOk = false;
+
+          row.style.display = (textoOk && dataOk) ? '' : 'none';
+        });
+      }
+
+      inputTexto.addEventListener('keyup', filtrarATAs);
+      inputDataInicio.addEventListener('change', filtrarATAs);
+      inputDataFim.addEventListener('change', filtrarATAs);
+
+      btnLimpar.addEventListener('click', () => {
+        inputTexto.value = '';
+        inputDataInicio.value = '';
+        inputDataFim.value = '';
+        filtrarATAs();
+      });
 
       var quill = new Quill('#editor', {
         theme: 'snow',

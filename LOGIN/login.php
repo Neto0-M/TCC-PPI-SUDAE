@@ -110,15 +110,19 @@ if (isset($_POST['login'])) {
     }
 
     footer {
-      background-color: #fff;
+      background-color: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(8px);
       position: fixed;
       bottom: 0;
       left: 0;
       width: 100%;
       text-align: center;
-      color: #666;
+      color: #555;
       font-size: 0.9rem;
-      padding: 5px 0;
+      padding: 10px 0;
+      border-top: 2px solid #dceee2;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+      z-index: 9999;
     }
   </style>
 </head>
@@ -155,6 +159,9 @@ if (isset($_POST['login'])) {
           <div class="d-grid mb-3">
             <button type="submit" name="login" class="btn btn-login text-white">Entrar</button>
           </div>
+          <div class="d-grid place-items-center gap-3 mt-3 mb-3 w-100">
+            <a href="../LANDING/index.html" class="btn btn-secondary px-4">Voltar</a>
+          </div>
         </form>
 
         <div class="login-links text-center">
@@ -164,7 +171,10 @@ if (isset($_POST['login'])) {
           <a href="esqueceu.php">Esqueci minha senha</a>
         </div>
       <?php endif; ?>
+
     </div>
+
+
 
     <img src="../assets/img/SUDAE.svg" alt="Logo SUDAE" class="logo">
 
