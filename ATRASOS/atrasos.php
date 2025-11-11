@@ -1,7 +1,7 @@
 <?php
 session_start();
 include '../conexao.php';
-
+date_default_timezone_set('America/Sao_Paulo');
 function data_br($data)
 {
     return date('d/m/Y H:i:s', strtotime($data));
@@ -125,88 +125,191 @@ if (isset($_GET['edit'])) {
     <title>Registro de Atrasos - SUDAE</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
-            background-color: #e6f4ec;
-            font-family: 'Segoe UI', sans-serif;
-            padding-bottom: 100px;
-        }
+    :root {
+        --verde-sudae: #198754;
+        --verde-claro: #e8f5ee;
+        --cinza-claro: #f9f9f9;
+    }
 
-        .logo {
-            position: absolute;
-            left: 25px;
-            width: 50px;
-            height: auto;
-        }
+    body {
+        background-color: var(--verde-claro);
+        font-family: "Segoe UI", sans-serif;
+        padding-bottom: 100px;
+    }
 
+    header {
+        background-color: #fff;
+        border-bottom: 2px solid #dceee2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 40px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    header .logo {
+        width: 50px;
+        height: auto;
+    }
+
+    header h1 {
+        flex-grow: 1;
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: var(--verde-sudae);
+        padding-left: 5px;
+        margin: 0;
+    }
+
+    header nav a {
+        margin-left: 10px;
+    }
+
+    .container {
+        max-width: 1100px;
+    }
+
+    .card {
+        border-radius: 14px;
+        border: none;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        background: #fff;
+    }
+
+    .card h3,
+    .card h4 {
+        color: var(--verde-sudae);
+    }
+
+    form label {
+        color: #333;
+    }
+
+    form .form-control,
+    form .form-select,
+    textarea {
+        border-radius: 8px;
+        border: 1px solid #ced4da;
+        transition: 0.2s ease-in-out;
+    }
+
+    form .form-control:focus,
+    form .form-select:focus {
+        border-color: var(--verde-sudae);
+        box-shadow: 0 0 0 0.15rem rgba(25, 135, 84, 0.2);
+    }
+
+    form button {
+        border-radius: 8px;
+        font-weight: 600;
+    }
+
+    .btn-success {
+        background-color: var(--verde-sudae);
+        border: none;
+    }
+
+    .btn-warning {
+        color: #fff !important;
+        border: none;
+    }
+
+    .btn-warning:hover {
+        background-color: #e0a800;
+    }
+
+    table {
+        border-radius: 10px;
+        overflow: hidden;
+        margin-top: 10px;
+    }
+
+    thead {
+        background-color: #f1f8f4;
+        color: var(--verde-sudae);
+    }
+
+    th,
+    td {
+        vertical-align: middle !important;
+        text-align: center;
+    }
+
+    th {
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    td {
+        font-size: 0.9rem;
+    }
+
+    tr:nth-child(even) {
+        background-color: var(--cinza-claro);
+    }
+
+    #buscarTextoAtrasos,
+    #buscarDataInicioAtrasos,
+    #buscarDataFimAtrasos {
+        border-radius: 8px;
+    }
+
+    #limparFiltrosAtrasos {
+        border-radius: 8px;
+        font-weight: 600;
+    }
+
+    footer {
+        background-color: #fff;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        text-align: center;
+        color: #555;
+        font-size: 0.9rem;
+        padding: 10px 0;
+        border-top: 2px solid #dceee2;
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+        z-index: 99;
+    }
+
+    @media (max-width: 768px) {
         header {
-            background-color: #fff;
-            padding: 15px 40px;
-            border-bottom: 2px solid #dceee2;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            position: relative;
+            flex-direction: column;
+            text-align: center;
+            gap: 10px;
         }
 
         header h1 {
-            position: absolute;
-            left: 140px;
-            font-size: 1.2rem;
-            color: #198754;
-            font-weight: bold;
-            margin: 0;
+            font-size: 1.1rem;
         }
 
-        .btn-outline-light:hover {
-            background: white;
-            color: #198754;
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
-        .card {
-            border-radius: 12px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.08);
+        .col-md-4,
+        .col-md-6,
+        .col-md-8 {
+            flex: 100%;
+            max-width: 100%;
         }
 
-        th {
-            color: #198754;
+        table {
+            font-size: 0.8rem;
         }
 
-        .btn-outline-primary {
-            border-color: #198754;
-            color: #198754;
+        .btn {
+            margin-top: 5px;
         }
-
-        .btn-outline-primary:hover {
-            background-color: #198754;
-            color: #fff;
-        }
-
-        .btn-outline-danger {
-            border-color: #dc3545;
-            color: #dc3545;
-        }
-
-        .btn-outline-danger:hover {
-            background-color: #dc3545;
-            color: #fff;
-        }
-
-        footer {
-            background-color: rgba(255, 255, 255, 0.96);
-            backdrop-filter: blur(8px);
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            text-align: center;
-            color: #555;
-            font-size: 0.9rem;
-            padding: 10px 0;
-            border-top: 2px solid #dceee2;
-            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-            z-index: 9999;
-        }
-    </style>
+    }
+</style>
 </head>
 
 <body>
