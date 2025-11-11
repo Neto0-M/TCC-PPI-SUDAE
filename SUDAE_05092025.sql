@@ -22,7 +22,6 @@
     `tipo` TINYINT(4) NOT NULL COMMENT '1 - Servidor AE\n2 - Professor\n3 - Aluno',
     `curso` VARCHAR(255) NULL DEFAULT NULL COMMENT 'Curso do aluno',
     `turma` CHAR(5) NULL DEFAULT NULL COMMENT 'Do Aluno -30\nTE-20\nTA-10',
-    `materia` VARCHAR(45) NULL DEFAULT NULL COMMENT 'Do Professor',
     PRIMARY KEY (`idUSUARIO`),
     UNIQUE INDEX `matricula_UNIQUE` (`matricula` ASC),
     UNIQUE INDEX `login_UNIQUE` (`login` ASC)

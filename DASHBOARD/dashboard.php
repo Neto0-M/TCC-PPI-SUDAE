@@ -298,10 +298,13 @@ $totalPaginasAtrasos = ceil($qtdAtrasos / $limiteAtrasos); ?>
         </div>
       </div>
     </div> <?php if ($tipo == 1): ?>
-      <div class="d-flex justify-content-center mb-5 flex-wrap botao-grande-gap"> <a href="../ATAS/cadastrar_Ata.php"
-          class="btn btn-success btn-lg px-4"><img src="../assets/img/ata.svg" class="img-btn"> Registrar ATA</a> <a
-          href="../ATRASOS/atrasos.php" class="btn btn-warning btn-lg px-4 text-white"><img src="../assets/img/atraso.svg"
-            class="img-btn"> Registrar Atraso</a> </div> <?php endif; ?>
+      <div class="d-flex justify-content-center mb-5 flex-wrap botao-grande-gap"> 
+        <a href="../ATAS/cadastrar_Ata.php" class="btn btn-success btn-lg px-4">
+          <img src="../assets/img/ata.svg" class="img-btn"> Registrar ATA</a> 
+        <a href="../ATRASOS/atrasos.php" class="btn btn-warning btn-lg px-4 text-white">
+          <img src="../assets/img/atraso.svg" class="img-btn"> Registrar Atraso
+        </a> 
+      </div> <?php endif; ?>
     <div class="row g-4">
       <div class="col-md-6">
         <div class="d-flex justify-content-between align-items-center mb-3">
