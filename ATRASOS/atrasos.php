@@ -1,7 +1,7 @@
 <?php
 session_start();
 include '../conexao.php';
-
+date_default_timezone_set('America/Sao_Paulo');
 function data_br($data)
 {
     return date('d/m/Y H:i:s', strtotime($data));
@@ -125,42 +125,52 @@ if (isset($_GET['edit'])) {
     <title>Registro de Atrasos - SUDAE</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
-            background-color: #e6f4ec;
-            font-family: 'Segoe UI', sans-serif;
-            padding-bottom: 100px;
-        }
+    :root {
+        --verde-sudae: #198754;
+        --verde-claro: #e8f5ee;
+        --cinza-claro: #f9f9f9;
+    }
 
-        .logo {
-            position: absolute;
-            left: 25px;
-            width: 50px;
-            height: auto;
-        }
+    body {
+        background-color: var(--verde-claro);
+        font-family: "Segoe UI", sans-serif;
+        padding-bottom: 100px;
+    }
 
-        header {
-            background-color: #fff;
-            padding: 15px 40px;
-            border-bottom: 2px solid #dceee2;
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            position: relative;
-        }
+    header {
+        background-color: #fff;
+        border-bottom: 2px solid #dceee2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 40px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
 
-        header h1 {
-            position: absolute;
-            left: 140px;
-            font-size: 1.2rem;
-            color: #198754;
-            font-weight: bold;
-            margin: 0;
-        }
+    header .logo {
+        width: 50px;
+        height: auto;
+    }
 
-        .btn-outline-light:hover {
-            background: white;
-            color: #198754;
-        }
+    header h1 {
+        flex-grow: 1;
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: var(--verde-sudae);
+        padding-left: 5px;
+        margin: 0;
+    }
+
+    header nav a {
+        margin-left: 10px;
+    }
+
+    .container {
+        max-width: 1100px;
+    }
 
         .card {
             border-radius: 12px;
@@ -191,56 +201,54 @@ if (isset($_GET['edit'])) {
             color: #fff;
         }
 
-        #tabelaAtrasos tbody {
-            display: block;
-            max-height: 350px;
-            /* altura fixa desejada */
-            overflow-y: auto;
-            /* rolagem interna */
-        }
+    footer {
+        background-color: #fff;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        text-align: center;
+        color: #555;
+        font-size: 0.9rem;
+        padding: 10px 0;
+        border-top: 2px solid #dceee2;
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+        z-index: 99;
+    }
 
-        #tabelaAtrasos thead,
-        #tabelaAtrasos tbody tr {
-            display: table;
-            width: 100%;
-            table-layout: fixed;
-            /* mantém colunas alinhadas */
-        }
-
-        /* Garante que colunas não mudem de tamanho */
-        #tabelaAtrasos th,
-        #tabelaAtrasos td {
-            white-space: nowrap;
-            text-overflow: ellipsis;
-            overflow: hidden;
-        }
-
-        /* Opcional: estiliza o scroll de forma discreta */
-        #tabelaAtrasos tbody::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        #tabelaAtrasos tbody::-webkit-scrollbar-thumb {
-            background-color: rgba(0, 0, 0, 0.2);
-            border-radius: 4px;
-        }
-
-        footer {
-            background-color: rgba(255, 255, 255, 0.96);
-            backdrop-filter: blur(8px);
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
+    @media (max-width: 768px) {
+        header {
+            flex-direction: column;
             text-align: center;
-            color: #555;
-            font-size: 0.9rem;
-            padding: 10px 0;
-            border-top: 2px solid #dceee2;
-            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-            z-index: 9999;
+            gap: 10px;
         }
-    </style>
+
+        header h1 {
+            font-size: 1.1rem;
+        }
+
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .col-md-4,
+        .col-md-6,
+        .col-md-8 {
+            flex: 100%;
+            max-width: 100%;
+        }
+
+        table {
+            font-size: 0.8rem;
+        }
+
+        .btn {
+            margin-top: 5px;
+        }
+    }
+</style>
 </head>
 
 <body>

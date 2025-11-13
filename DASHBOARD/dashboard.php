@@ -275,6 +275,7 @@ $totalPaginasAtrasos = ceil($qtdAtrasos / $limiteAtrasos); ?>
       border: 1px solid #198754;
     }
 
+
     footer {
       background-color: rgba(255, 255, 255, 0.96);
       backdrop-filter: blur(8px);
@@ -354,10 +355,13 @@ $totalPaginasAtrasos = ceil($qtdAtrasos / $limiteAtrasos); ?>
         </div>
       </div>
     </div> <?php if ($tipo == 1): ?>
-      <div class="d-flex justify-content-center mb-5 flex-wrap botao-grande-gap"> <a href="../ATAS/cadastrar_Ata.php"
-          class="btn btn-success btn-lg px-4"><img src="../assets/img/ata.svg" class="img-btn"> Registrar ATA</a> <a
-          href="../ATRASOS/atrasos.php" class="btn btn-warning btn-lg px-4 text-white"><img src="../assets/img/atraso.svg"
-            class="img-btn"> Registrar Atraso</a> </div> <?php endif; ?>
+      <div class="d-flex justify-content-center mb-5 flex-wrap botao-grande-gap">
+        <a href="../ATAS/cadastrar_Ata.php" class="btn btn-success btn-lg px-4">
+          <img src="../assets/img/ata.svg" class="img-btn"> Registrar ATA</a>
+        <a href="../ATRASOS/atrasos.php" class="btn btn-warning btn-lg px-4 text-white">
+          <img src="../assets/img/atraso.svg" class="img-btn"> Registrar Atraso
+        </a>
+      </div> <?php endif; ?>
     <div class="row g-4">
       <div class="col-md-6">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -372,17 +376,15 @@ $totalPaginasAtrasos = ceil($qtdAtrasos / $limiteAtrasos); ?>
               </select>
             </form>
           </div>
-        </div> <?php if ($resAtas && $resAtas->num_rows > 0): ?>   <?php while ($ata = $resAtas->fetch_assoc()): ?> <a
+        </div> <?php if ($resAtas && $resAtas->num_rows > 0): ?> <?php while ($ata = $resAtas->fetch_assoc()): ?> <a
               href="../ATAS/cadastrar_ata.php?editar=<?= $ata['idATA'] ?>" class="text-decoration-none text-dark">
               <div class="ata mb-3 p-3 hover-ata">
                 <h5><?= htmlspecialchars($ata['assunto'] ?? $ata['titulo']) ?></h5>
-                <div class="anotacao-limitada">
-                  <?= strip_tags($ata['anotacoes'], '<p><b><i><ul><li><br>') ?>
-                </div>
-                <img src="../assets/img/data.svg" class="img-btn"> <?= date('d/m/Y H:i', strtotime($ata['data'])) ?><br>
-                <?php if (isset($ata['qtd_participantes'])): ?> <img src="../assets/img/participantes.svg" class="img-btn">
-                  <?= $ata['qtd_participantes'] ?> participantes<br> <strong>Participantes:</strong>
-                  <?= htmlspecialchars($ata['participantes']) ?>     <?php endif; ?> </small>
+                <p class="text-truncate"><?= strip_tags($ata['anotacoes']) ?></p> <small class="text-muted"> <img
+                    src="../assets/img/data.svg" class="img-btn"> <?= date('d/m/Y H:i', strtotime($ata['data'])) ?><br>
+                  <?php if (isset($ata['qtd_participantes'])): ?> <img src="../assets/img/participantes.svg"
+                      class="img-btn"> <?= $ata['qtd_participantes'] ?> participantes<br> <em>Participantes:</em>
+                    <?= htmlspecialchars($ata['participantes']) ?>     <?php endif; ?> </small>
               </div>
             </a> <?php endwhile; ?> <?php else: ?>
           <div class="alert alert-info text-center">Nenhuma ATA registrada ainda.</div> <?php endif; ?>
