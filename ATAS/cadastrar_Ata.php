@@ -210,13 +210,15 @@ $result = $conn->query($sql_listar);
 
 <body>
 
-  <header>
-    <img src="../assets/img/SUDAE.svg" alt="Logo SUDAE" class="logo">
+  <header> <img src="../assets/img/SUDAE.svg" alt="Logo SUDAE" class="logo">
     <h1>Sistema Unificado da Assistência Estudantil</h1>
     <nav>
-      <a href="../LOGIN/cadastro.php" class="btn btn-outline-success btn-sm">Cadastrar</a>
-      <a href="../DASHBOARD/dados.php" class="btn btn-outline-secondary btn-sm me-2">Meus Dados</a>
-      <a href="../LOGIN/logout.php" class="btn btn-danger btn-sm">Sair</a>
+      <?php if ($tipoUsuario == 1): ?>
+        <a href="../LOGIN/cadastro.php" class="btn btn-outline-success btn-sm">Cadastrar</a>
+      <?php endif; ?>
+      <a href="../dashboard/dados.php" class="btn btn-outline-secondary btn-sm">Meus Dados</a>
+      <a href="../LOGIN/logout.php" class="btn btn-danger btn-sm">Sair
+      </a>
     </nav>
   </header>
 
@@ -263,30 +265,43 @@ $result = $conn->query($sql_listar);
         <textarea name="encaminhamentos" class="form-control" rows="3" <?= $modoVisualizacao ? 'disabled' : '' ?>><?= htmlspecialchars($ataEdit['encaminhamentos'] ?? '') ?></textarea>
       </div>
 
-      <h5 class="text-success mb-3 mt-3">Selecionar Participantes</h5>
-      <div class="row g-4">
-        <?php
-        function renderParticipantes($lista, $titulo, $idDiv, $selecionados = [], $modoVisualizacao)
-        {
-          echo "<div class='col-md-4'>
-                  <h6 class='text-center text-success'>$titulo</h6>
-                  <input type='text' class='form-control form-control-sm mb-2' placeholder='Pesquisar...' onkeyup=\"filtrar(this, '$idDiv')\">
-                  <div class='coluna-participantes' id='$idDiv'>";
-          while ($p = $lista->fetch_assoc()) {
-            $checked = in_array($p['idUSUARIO'], $selecionados) ? 'checked' : '';
-            echo "<div class='form-check'>
-                      <input class='form-check-input' type='checkbox' name='participantes[]' value='{$p['idUSUARIO']}' $checked " . ($modoVisualizacao ? 'disabled' : '') . ">
-                      <label class='form-check-label'>" . htmlspecialchars($p['nome']) . "</label>
-                    </div>";
-          }
-          echo "</div></div>";
-        }
+      <?php if ($tipoUsuario == 1): ?>
+        <h5 class="text-success mb-3 mt-3">Selecionar Participantes</h5>
+        <div class="row g-4">
+          <?php
+          function renderParticipantes($lista, $titulo, $idDiv, $selecionados = [], $modoVisualizacao)
+          {
+            echo "<div class='col-md-4'>
+            <h6 class='text-center text-success'>$titulo</h6>
+            <input type='text' 
+                   class='form-control form-control-sm mb-2' 
+                   placeholder='Pesquisar $titulo...' 
+                   onkeyup=\"filtrar(this, '$idDiv')\">
+            <div class='coluna-participantes' id='$idDiv' style='display:none;'>";
 
-        renderParticipantes($alunos, "Alunos", "aluno-lista", $participantesEdit, $modoVisualizacao);
-        renderParticipantes($professores, "Professores", "prof-lista", $participantesEdit, $modoVisualizacao);
-        renderParticipantes($servidores, "Servidores", "serv-lista", $participantesEdit, $modoVisualizacao);
-        ?>
-      </div>
+            if ($lista && $lista->num_rows > 0) {
+              while ($p = $lista->fetch_assoc()) {
+                $checked = in_array($p['idUSUARIO'], $selecionados) ? 'checked' : '';
+                echo "<div class='form-check participante-item' style='display:none;'>
+                <input class='form-check-input' type='checkbox' name='participantes[]' 
+                       value='{$p['idUSUARIO']}' $checked " . ($modoVisualizacao ? 'disabled' : '') . ">
+                <label class='form-check-label'>" . htmlspecialchars($p['nome']) . "</label>
+              </div>";
+              }
+            } else {
+              echo "<p class='text-muted small text-center'>Nenhum participante disponível.</p>";
+            }
+
+            echo "  </div>
+          </div>";
+          }
+          renderParticipantes($alunos, "Alunos", "aluno-lista", $participantesEdit, $modoVisualizacao);
+          renderParticipantes($professores, "Professores", "prof-lista", $participantesEdit, $modoVisualizacao);
+          renderParticipantes($servidores, "Servidores", "serv-lista", $participantesEdit, $modoVisualizacao);
+          ?>
+        </div>
+        </div>
+      <?php endif; ?>
 
       <div class="d-flex justify-content-end gap-3 mt-4">
         <a href="../DASHBOARD/dashboard.php" class="btn btn-secondary px-4">Voltar</a>
@@ -302,61 +317,61 @@ $result = $conn->query($sql_listar);
     </form>
 
     <?php if ($tipoUsuario == 1): ?>
-    <div class="card mt-5 p-4">
-      <h4 class="fw-bold text-success mb-3">ATAs Registradas</h4>
-      <div class="mb-3 row g-2 align-items-center">
-        <div class="col-md-4">
-          <input type="text" id="buscarTexto" class="form-control"
-            placeholder="Buscar por assunto, redator ou participante...">
+      <div class="card mt-5 p-4">
+        <h4 class="fw-bold text-success mb-3">ATAs Registradas</h4>
+        <div class="mb-3 row g-2 align-items-center">
+          <div class="col-md-4">
+            <input type="text" id="buscarTexto" class="form-control"
+              placeholder="Buscar por assunto, redator ou participante...">
+          </div>
+          <div class="col-md-3">
+            <input type="date" id="buscarDataInicio" class="form-control" placeholder="Data inicial">
+          </div>
+          <div class="col-md-3">
+            <input type="date" id="buscarDataFim" class="form-control" placeholder="Data final">
+          </div>
+          <div class="col-md-2">
+            <button type="button" class="btn btn-success w-100" id="limparFiltros">Limpar filtros</button>
+          </div>
         </div>
-        <div class="col-md-3">
-          <input type="date" id="buscarDataInicio" class="form-control" placeholder="Data inicial">
-        </div>
-        <div class="col-md-3">
-          <input type="date" id="buscarDataFim" class="form-control" placeholder="Data final">
-        </div>
-        <div class="col-md-2">
-          <button type="button" class="btn btn-success w-100" id="limparFiltros">Limpar filtros</button>
-        </div>
-      </div>
-      <table class="table table-hover table-bordered align-middle">
-        <thead class="table-light">
-          <tr>
-            <th>Data</th>
-            <th>Assunto</th>
-            <th>Redator</th>
-            <th>Participantes</th>
-            <th class="text-center">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php if ($result && $result->num_rows > 0): ?>
-            <?php while ($ata = $result->fetch_assoc()): ?>
-              <tr>
-                <td><?= date('d/m/Y H:i', strtotime($ata['data'])) ?></td>
-                <td><?= htmlspecialchars($ata['assunto']) ?></td>
-                <td><?= htmlspecialchars($ata['redator']) ?></td>
-                <td><?= htmlspecialchars($ata['participantes'] ?: '-') ?></td>
-                <td class="text-center">
-                  
-                  <?php if (!$modoVisualizacao): ?>
-                    <a href="?editar=<?= $ata['idATA'] ?>" class="btn btn-sm btn-outline-primary">Editar</a>
-                    <a href="?delete=<?= $ata['idATA'] ?>" class="btn btn-sm btn-outline-danger"
-                      onclick="return confirm('Excluir esta ATA?')">Excluir</a>
-                  <?php else: ?>
-                    <span class="text-muted">Sem ações</span>
-                  <?php endif; ?>
-                </td>
-              </tr>
-            <?php endwhile; ?>
-          <?php else: ?>
+        <table class="table table-hover table-bordered align-middle">
+          <thead class="table-light">
             <tr>
-              <td colspan="5" class="text-center text-muted">Nenhuma ATA registrada.</td>
+              <th>Data</th>
+              <th>Assunto</th>
+              <th>Redator</th>
+              <th>Participantes</th>
+              <th class="text-center">Ações</th>
             </tr>
-          <?php endif; ?>
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            <?php if ($result && $result->num_rows > 0): ?>
+              <?php while ($ata = $result->fetch_assoc()): ?>
+                <tr>
+                  <td><?= date('d/m/Y H:i', strtotime($ata['data'])) ?></td>
+                  <td><?= htmlspecialchars($ata['assunto']) ?></td>
+                  <td><?= htmlspecialchars($ata['redator']) ?></td>
+                  <td><?= htmlspecialchars($ata['participantes'] ?: '-') ?></td>
+                  <td class="text-center">
+
+                    <?php if (!$modoVisualizacao): ?>
+                      <a href="?editar=<?= $ata['idATA'] ?>" class="btn btn-sm btn-outline-primary">Editar</a>
+                      <a href="?delete=<?= $ata['idATA'] ?>" class="btn btn-sm btn-outline-danger"
+                        onclick="return confirm('Excluir esta ATA?')">Excluir</a>
+                    <?php else: ?>
+                      <span class="text-muted">Sem ações</span>
+                    <?php endif; ?>
+                  </td>
+                </tr>
+              <?php endwhile; ?>
+            <?php else: ?>
+              <tr>
+                <td colspan="5" class="text-center text-muted">Nenhuma ATA registrada.</td>
+              </tr>
+            <?php endif; ?>
+          </tbody>
+        </table>
+      </div>
     <?php endif; ?>
 
     <footer>
@@ -365,14 +380,36 @@ $result = $conn->query($sql_listar);
 
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script>
-      function filtrar(input, listaId) {
-        const filtro = input.value.toLowerCase();
-        document.querySelectorAll(`#${listaId} .form-check`).forEach(item => {
+      // === FILTRAR PARTICIPANTES ===
+      function filtrar(input, idDiv) {
+        const termo = input.value.trim().toLowerCase();
+        const div = document.getElementById(idDiv);
+        const itens = div.querySelectorAll('.participante-item');
+        let temResultado = false;
+
+        // Se não digitou nada, esconde tudo
+        if (termo === '') {
+          div.style.display = 'none';
+          itens.forEach(item => item.style.display = 'none');
+          return;
+        }
+
+        // Mostra a div e filtra os participantes
+        itens.forEach(item => {
           const nome = item.textContent.toLowerCase();
-          item.style.display = nome.includes(filtro) ? '' : 'none';
+          if (nome.includes(termo)) {
+            item.style.display = 'block';
+            temResultado = true;
+          } else {
+            item.style.display = 'none';
+          }
         });
+
+        // Mostra apenas se houver resultados
+        div.style.display = temResultado ? 'block' : 'none';
       }
 
+      // === FILTRO DE ATAS ===
       const inputTexto = document.getElementById('buscarTexto');
       const inputDataInicio = document.getElementById('buscarDataInicio');
       const inputDataFim = document.getElementById('buscarDataFim');
@@ -387,7 +424,7 @@ $result = $conn->query($sql_listar);
           const assunto = row.cells[1].textContent.toLowerCase();
           const redator = row.cells[2].textContent.toLowerCase();
           const participantes = row.cells[3].textContent.toLowerCase();
-          const dataRow = new Date(row.cells[0].textContent.split(' ')[0].split('/').reverse().join('-')); // converte dd/mm/yyyy
+          const dataRow = new Date(row.cells[0].textContent.split(' ')[0].split('/').reverse().join('-'));
 
           let textoOk = assunto.includes(textoFiltro) || redator.includes(textoFiltro) || participantes.includes(textoFiltro);
           let dataOk = true;
@@ -399,17 +436,17 @@ $result = $conn->query($sql_listar);
         });
       }
 
-      inputTexto.addEventListener('keyup', filtrarATAs);
-      inputDataInicio.addEventListener('change', filtrarATAs);
-      inputDataFim.addEventListener('change', filtrarATAs);
-
-      btnLimpar.addEventListener('click', () => {
+      inputTexto?.addEventListener('keyup', filtrarATAs);
+      inputDataInicio?.addEventListener('change', filtrarATAs);
+      inputDataFim?.addEventListener('change', filtrarATAs);
+      btnLimpar?.addEventListener('click', () => {
         inputTexto.value = '';
         inputDataInicio.value = '';
         inputDataFim.value = '';
         filtrarATAs();
       });
 
+      // === EDITOR QUILL ===
       var quill = new Quill('#editor', {
         theme: 'snow',
         placeholder: 'Escreva aqui as anotações da ATA...',
@@ -436,6 +473,7 @@ $result = $conn->query($sql_listar);
         document.getElementById('anotacoes').value = quill.root.innerHTML;
       });
     </script>
+
 
 </body>
 

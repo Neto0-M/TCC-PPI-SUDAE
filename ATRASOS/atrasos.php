@@ -191,6 +191,40 @@ if (isset($_GET['edit'])) {
             color: #fff;
         }
 
+        #tabelaAtrasos tbody {
+            display: block;
+            max-height: 350px;
+            /* altura fixa desejada */
+            overflow-y: auto;
+            /* rolagem interna */
+        }
+
+        #tabelaAtrasos thead,
+        #tabelaAtrasos tbody tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+            /* mantém colunas alinhadas */
+        }
+
+        /* Garante que colunas não mudem de tamanho */
+        #tabelaAtrasos th,
+        #tabelaAtrasos td {
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+
+        /* Opcional: estiliza o scroll de forma discreta */
+        #tabelaAtrasos tbody::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #tabelaAtrasos tbody::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
         footer {
             background-color: rgba(255, 255, 255, 0.96);
             backdrop-filter: blur(8px);
@@ -311,7 +345,8 @@ if (isset($_GET['edit'])) {
                         filtros</button>
                 </div>
             </div>
-            <table class="table table-hover table-bordered align-middle">
+
+            <table class="table table-hover table-bordered align-middle" id="tabelaAtrasos">
                 <thead class="table-light">
                     <tr>
                         <th>Data</th>
@@ -323,8 +358,8 @@ if (isset($_GET['edit'])) {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if ($atrasos):
-                        foreach ($atrasos as $a): ?>
+                    <?php if ($atrasos): ?>
+                        <?php foreach ($atrasos as $a): ?>
                             <tr>
                                 <td><?= data_br($a['data']) ?></td>
                                 <td><?= htmlspecialchars($a['matricula']) ?></td>
@@ -337,13 +372,17 @@ if (isset($_GET['edit'])) {
                                         onclick="return confirm('Excluir este atraso?')">Excluir</a>
                                 </td>
                             </tr>
-                        <?php endforeach; else: ?>
+                        <?php endforeach; ?>
+                    <?php else: ?>
                         <tr>
                             <td colspan="6" class="text-center text-muted">Nenhum atraso registrado.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
             </table>
+
+            <!-- Paginação -->
+            <nav id="paginacaoAtrasos" class="d-flex justify-content-center mt-3"></nav>
         </div>
     </div>
 
@@ -356,42 +395,114 @@ if (isset($_GET['edit'])) {
         const inputDataInicioAtrasos = document.getElementById('buscarDataInicioAtrasos');
         const inputDataFimAtrasos = document.getElementById('buscarDataFimAtrasos');
         const btnLimparAtrasos = document.getElementById('limparFiltrosAtrasos');
+        const tabela = document.querySelector("#tabelaAtrasos tbody");
+        const todasLinhas = Array.from(tabela.querySelectorAll("tr"));
+        const paginacao = document.getElementById("paginacaoAtrasos");
+        const porPagina = 5;
+        let paginaAtual = 1;
+        let linhasFiltradas = [...todasLinhas];
+
+        function renderizarTabela() {
+            const inicio = (paginaAtual - 1) * porPagina;
+            const fim = inicio + porPagina;
+
+            linhasFiltradas.forEach((linha, i) => {
+                linha.style.display = (i >= inicio && i < fim) ? "" : "none";
+            });
+
+            atualizarPaginacao();
+        }
+
+        function atualizarPaginacao() {
+            const totalPaginas = Math.ceil(linhasFiltradas.length / porPagina);
+            paginacao.innerHTML = "";
+
+            if (totalPaginas <= 1) return;
+
+            const ul = document.createElement("ul");
+            ul.className = "pagination";
+
+            const liAnterior = document.createElement("li");
+            liAnterior.className = `page-item ${paginaAtual === 1 ? "disabled" : ""}`;
+            liAnterior.innerHTML = `<a class="page-link text-success" href="#">Anterior</a>`;
+            liAnterior.onclick = (e) => {
+                e.preventDefault();
+                if (paginaAtual > 1) {
+                    paginaAtual--;
+                    renderizarTabela();
+                }
+            };
+            ul.appendChild(liAnterior);
+
+            for (let i = 1; i <= totalPaginas; i++) {
+                const li = document.createElement("li");
+                li.className = `page-item ${i === paginaAtual ? "active" : ""}`;
+                li.innerHTML = `<a class="page-link ${i === paginaAtual ? 'bg-success border-success text-white' : 'text-success'}" href="#">${i}</a>`;
+                li.onclick = (e) => {
+                    e.preventDefault();
+                    paginaAtual = i;
+                    renderizarTabela();
+                };
+                ul.appendChild(li);
+            }
+
+            const liProximo = document.createElement("li");
+            liProximo.className = `page-item ${paginaAtual === totalPaginas ? "disabled" : ""}`;
+            liProximo.innerHTML = `<a class="page-link text-success" href="#">Próximo</a>`;
+            liProximo.onclick = (e) => {
+                e.preventDefault();
+                if (paginaAtual < totalPaginas) {
+                    paginaAtual++;
+                    renderizarTabela();
+                }
+            };
+            ul.appendChild(liProximo);
+
+            paginacao.appendChild(ul);
+        }
 
         function filtrarAtrasos() {
             const textoFiltro = inputTextoAtrasos.value.toLowerCase();
             const dataInicio = inputDataInicioAtrasos.value ? new Date(inputDataInicioAtrasos.value) : null;
             const dataFim = inputDataFimAtrasos.value ? new Date(inputDataFimAtrasos.value) : null;
 
-            document.querySelectorAll('table tbody tr').forEach(row => {
+            linhasFiltradas = todasLinhas.filter(row => {
                 const dataRow = new Date(row.cells[0].textContent.split(' ')[0].split('/').reverse().join('-'));
                 const matricula = row.cells[1].textContent.toLowerCase();
                 const aluno = row.cells[2].textContent.toLowerCase();
                 const professor = row.cells[3].textContent.toLowerCase();
                 const motivo = row.cells[4].textContent.toLowerCase();
 
-                let textoOk = matricula.includes(textoFiltro) || aluno.includes(textoFiltro) ||
+                const textoOk = matricula.includes(textoFiltro) || aluno.includes(textoFiltro) ||
                     professor.includes(textoFiltro) || motivo.includes(textoFiltro);
 
                 let dataOk = true;
                 if (dataInicio && dataRow < dataInicio) dataOk = false;
                 if (dataFim && dataRow > dataFim) dataOk = false;
 
-                row.style.display = (textoOk && dataOk) ? '' : 'none';
+                row.style.display = (textoOk && dataOk) ? "" : "none";
+                return (textoOk && dataOk);
             });
+
+            paginaAtual = 1;
+            renderizarTabela();
         }
 
         inputTextoAtrasos.addEventListener('keyup', filtrarAtrasos);
         inputDataInicioAtrasos.addEventListener('change', filtrarAtrasos);
         inputDataFimAtrasos.addEventListener('change', filtrarAtrasos);
-
         btnLimparAtrasos.addEventListener('click', () => {
             inputTextoAtrasos.value = '';
             inputDataInicioAtrasos.value = '';
             inputDataFimAtrasos.value = '';
-            filtrarAtrasos();
+            linhasFiltradas = [...todasLinhas];
+            paginaAtual = 1;
+            renderizarTabela();
         });
 
+        renderizarTabela();
 
+        // Buscar aluno por matrícula
         document.getElementById('matricula').addEventListener('blur', function () {
             const matricula = this.value.trim();
             const nomeAluno = document.getElementById('nomeAluno');
@@ -408,7 +519,6 @@ if (isset($_GET['edit'])) {
             }
         });
     </script>
-
 </body>
 
 </html>

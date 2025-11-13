@@ -17,42 +17,74 @@ $offsetAtas = ($paginaAtas - 1) * $limiteAtas;
 $offsetAtrasos = ($paginaAtrasos - 1) * $limiteAtrasos;
 
 /* ------------------ CONTAGEM DE ATRASOS ------------------ */
+/* ------------------ CONTAGEM DE ATRASOS ------------------ */
 $qtdAtrasos = 0;
+
+// se for servidor (tipo == 1) e estiver pesquisando um aluno
+$searchAluno = trim($_GET['searchAluno'] ?? '');
+
 if ($tipo == 3) {
+  // aluno logado
   $sqlAtrasos = "SELECT COUNT(*) AS total FROM ATRASO WHERE idAluno = ? AND data >= ?";
   $stmt = $conexao->prepare($sqlAtrasos);
   if ($diasAtrasos === 'ano') {
     $anoAtual = date('Y');
     $dataLimite = $anoAtual . '-01-01';
-    $stmt->bind_param("is", $idUsuario, $dataLimite);
   } else {
     $dataLimite = date('Y-m-d', strtotime("-$diasAtrasos days"));
-    $stmt->bind_param("is", $idUsuario, $dataLimite);
   }
+  $stmt->bind_param("is", $idUsuario, $dataLimite);
   $stmt->execute();
   $qtdAtrasos = (int) $stmt->get_result()->fetch_assoc()['total'];
 } elseif ($tipo == 2) {
+  // professor
   $sqlAtrasos = "SELECT COUNT(*) AS total FROM ATRASO WHERE idProfessor = ? AND data >= ?";
   $stmt = $conexao->prepare($sqlAtrasos);
   if ($diasAtrasos === 'ano') {
     $anoAtual = date('Y');
     $dataLimite = $anoAtual . '-01-01';
-    $stmt->bind_param("is", $idUsuario, $dataLimite);
   } else {
     $dataLimite = date('Y-m-d', strtotime("-$diasAtrasos days"));
-    $stmt->bind_param("is", $idUsuario, $dataLimite);
   }
+  $stmt->bind_param("is", $idUsuario, $dataLimite);
   $stmt->execute();
   $qtdAtrasos = (int) $stmt->get_result()->fetch_assoc()['total'];
 } else {
-  if ($diasAtrasos === 'ano') {
-    $anoAtual = date('Y');
-    $row = $conexao->query("SELECT COUNT(*) AS total FROM ATRASO WHERE YEAR(data) = '$anoAtual'")->fetch_assoc();
+  // servidor (tipo == 1)
+  if ($searchAluno !== '') {
+    // se estiver pesquisando aluno, conta só os atrasos dele
+    if ($diasAtrasos === 'ano') {
+      $anoAtual = date('Y');
+      $stmt = $conexao->prepare("
+        SELECT COUNT(*) AS total 
+        FROM ATRASO a
+        INNER JOIN USUARIO u ON a.idAluno = u.idUSUARIO
+        WHERE YEAR(a.data) = ? AND u.nome LIKE CONCAT('%', ?, '%')
+      ");
+      $stmt->bind_param("is", $anoAtual, $searchAluno);
+    } else {
+      $dataLimite = date('Y-m-d', strtotime("-$diasAtrasos days"));
+      $stmt = $conexao->prepare("
+        SELECT COUNT(*) AS total 
+        FROM ATRASO a
+        INNER JOIN USUARIO u ON a.idAluno = u.idUSUARIO
+        WHERE a.data >= ? AND u.nome LIKE CONCAT('%', ?, '%')
+      ");
+      $stmt->bind_param("ss", $dataLimite, $searchAluno);
+    }
+    $stmt->execute();
+    $qtdAtrasos = (int) $stmt->get_result()->fetch_assoc()['total'];
   } else {
-    $dataLimite = date('Y-m-d', strtotime("-$diasAtrasos days"));
-    $row = $conexao->query("SELECT COUNT(*) AS total FROM ATRASO WHERE data >= '$dataLimite'")->fetch_assoc();
+    // se não pesquisou aluno, mostra total geral
+    if ($diasAtrasos === 'ano') {
+      $anoAtual = date('Y');
+      $row = $conexao->query("SELECT COUNT(*) AS total FROM ATRASO WHERE YEAR(data) = '$anoAtual'")->fetch_assoc();
+    } else {
+      $dataLimite = date('Y-m-d', strtotime("-$diasAtrasos days"));
+      $row = $conexao->query("SELECT COUNT(*) AS total FROM ATRASO WHERE data >= '$dataLimite'")->fetch_assoc();
+    }
+    $qtdAtrasos = (int) $row['total'];
   }
-  $qtdAtrasos = (int) $row['total'];
 }
 
 /* ------------------ ATAS ------------------ */
@@ -185,6 +217,30 @@ $totalPaginasAtrasos = ceil($qtdAtrasos / $limiteAtrasos); ?>
       padding: 20px;
       margin-bottom: 15px;
     }
+
+    .anotacao-limitada {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-height: 4.17em;
+      line-height: 1em;
+      position: relative;
+      white-space: normal;
+      word-wrap: break-word;
+    }
+
+    .anotacao-limitada::after {
+      content: '...';
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      padding-left: 10px;
+      background: linear-gradient(to right, transparent, #fff 50%);
+      color: #198754;
+      /* verde suave do tema */
+      font-weight: bold;
+    }
+
 
     .ata h5,
     .atraso h5,
@@ -320,11 +376,13 @@ $totalPaginasAtrasos = ceil($qtdAtrasos / $limiteAtrasos); ?>
               href="../ATAS/cadastrar_ata.php?editar=<?= $ata['idATA'] ?>" class="text-decoration-none text-dark">
               <div class="ata mb-3 p-3 hover-ata">
                 <h5><?= htmlspecialchars($ata['assunto'] ?? $ata['titulo']) ?></h5>
-                <p class="text-truncate"><?= strip_tags($ata['anotacoes']) ?></p> <small class="text-muted"> <img
-                    src="../assets/img/data.svg" class="img-btn"> <?= date('d/m/Y H:i', strtotime($ata['data'])) ?><br>
-                  <?php if (isset($ata['qtd_participantes'])): ?> <img src="../assets/img/participantes.svg"
-                      class="img-btn"> <?= $ata['qtd_participantes'] ?> participantes<br> <em>Participantes:</em>
-                    <?= htmlspecialchars($ata['participantes']) ?>     <?php endif; ?> </small>
+                <div class="anotacao-limitada">
+                  <?= strip_tags($ata['anotacoes'], '<p><b><i><ul><li><br>') ?>
+                </div>
+                <img src="../assets/img/data.svg" class="img-btn"> <?= date('d/m/Y H:i', strtotime($ata['data'])) ?><br>
+                <?php if (isset($ata['qtd_participantes'])): ?> <img src="../assets/img/participantes.svg" class="img-btn">
+                  <?= $ata['qtd_participantes'] ?> participantes<br> <strong>Participantes:</strong>
+                  <?= htmlspecialchars($ata['participantes']) ?>     <?php endif; ?> </small>
               </div>
             </a> <?php endwhile; ?> <?php else: ?>
           <div class="alert alert-info text-center">Nenhuma ATA registrada ainda.</div> <?php endif; ?>

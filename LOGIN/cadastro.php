@@ -224,7 +224,12 @@ if (isset($_POST['cadastrar'])) {
           <div id="camposAluno">
             <div class="mb-3">
               <label for="curso" class="form-label">Curso</label>
-              <input type="text" name="curso" class="form-control">
+              <select name="curso" id="tipo" class="form-select" required>
+              <option value="">Selecione...</option>
+              <option value="Administração">Administração</option>
+              <option value="Eventos">Eventos</option>
+              <option value="Informática">Informática</option>
+            </select>
             </div>
             <div class="mb-3">
               <label for="turma" class="form-label">Turma</label>
